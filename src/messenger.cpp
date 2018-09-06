@@ -401,9 +401,9 @@ return false;
 
 
 void deleteMessageFromHub(const char* messageHash) {
-	
 	char output[100];
-	StaticJsonBuffer<200> jsonBuffer;
+	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonArray & mainArray = jsonBuffer.createArray();
 
 	mainArray.add("justsaying");
