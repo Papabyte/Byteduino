@@ -179,23 +179,38 @@ void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 bool sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, const char * text){
 
 	if (bufferForPackageSent.isFree){
-		char output[150];
-		StaticJsonBuffer<400> jsonBuffer;
-		JsonObject & message = jsonBuffer.createObject();
-		message["from"] = byteduino_device.deviceAddress;
-		message["device_hub"] = byteduino_device.hub;
-		message["subject"] = "text";
+		if (strlen(deviceHub) < MAX_HUB_STRING_SIZE){
+			if (strlen(recipientPubkey) == 44){
+				const size_t bufferSize = JSON_OBJECT_SIZE(4);
+				StaticJsonBuffer<bufferSize> jsonBuffer;
+				JsonObject & message = jsonBuffer.createObject();
+				message["from"] = (const char*) byteduino_device.deviceAddress;
+				message["device_hub"] = (const char*) byteduino_device.hub;
+				message["subject"] = "text";
 
-		message["body"]= text;
-		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-		memcpy(bufferForPackageSent.recipientPubkey,recipientPubkey,45);
-		memcpy(bufferForPackageSent.recipientHub,deviceHub,strlen(deviceHub));
-		bufferForPackageSent.isFree = false;
-		bufferForPackageSent.isRecipientKeyRequested = false;
-		message.printTo(bufferForPackageSent.message);
+				message["body"]= text;
+				bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
+				strcpy(bufferForPackageSent.recipientPubkey,recipientPubkey);
+				strcpy(bufferForPackageSent.recipientHub, deviceHub);
+				bufferForPackageSent.isFree = false;
+				bufferForPackageSent.isRecipientKeyRequested = false;
+				message.printTo(bufferForPackageSent.message);
 #ifdef DEBUG_PRINT
-		Serial.println(bufferForPackageSent.message);
+				Serial.println(bufferForPackageSent.message);
 #endif
+			}else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("wrong pub key size"));
+#endif
+		return false;
+	}
+
+		} else {
+#ifdef DEBUG_PRINT
+			Serial.println(F("hub url too long"));
+#endif
+			return false;
+		}
 
 		return true;
 	} else {
