@@ -95,15 +95,16 @@ void encryptAndSendPackage(){
 }
 void requestRecipientMessengerTempKey(){
 
-	char output[256];
-	StaticJsonBuffer<200> jsonBuffer;
+	char output[130];
+	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonArray & mainArray = jsonBuffer.createArray();
 
 	mainArray.add("request");
 	JsonObject & objRequest= jsonBuffer.createObject();
 
 	objRequest["command"] = "hub/get_temp_pubkey";
-	objRequest["params"] = bufferForPackageSent.recipientPubkey;
+	objRequest["params"] = (const char*) bufferForPackageSent.recipientPubkey;
 	
 	char tag[12];
 	getTag(tag,GET_RECIPIENT_KEY);
