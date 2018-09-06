@@ -41,26 +41,26 @@ void treatWaitingSignature(){
 	if (!waitingConfirmationSignature.isFree && waitingConfirmationSignature.isConfirmed){
 		if (bufferForPackageSent.isFree){
 			waitingConfirmationSignature.isFree = true;
-			char output[200];
-			StaticJsonBuffer<400> jsonBuffer;
+			const size_t bufferSize = 2*JSON_OBJECT_SIZE(4);
+			DynamicJsonBuffer jsonBuffer(bufferSize);
 			JsonObject & message = jsonBuffer.createObject();
-			message["from"] = byteduino_device.deviceAddress;
-			message["device_hub"] = byteduino_device.hub;
+			message["from"] = (const char*) byteduino_device.deviceAddress;
+			message["device_hub"] = (const char*) byteduino_device.hub;
 			message["subject"] = "signature";
 
 			JsonObject & objBody = jsonBuffer.createObject();
 			char hashB64[45];
 			Base64.encode(hashB64,(char *) waitingConfirmationSignature.hash, 32);
 			objBody["signed_text"]= hashB64;
-			objBody["signature"]= waitingConfirmationSignature.sigb64;
-			objBody["signing_path"]= waitingConfirmationSignature.signing_path;
-			objBody["address"]= waitingConfirmationSignature.address;
+			objBody["signature"] = (const char*) waitingConfirmationSignature.sigb64;
+			objBody["signing_path"] = (const char*) waitingConfirmationSignature.signing_path;
+			objBody["address"] = (const char*) waitingConfirmationSignature.address;
 
 			message["body"]= objBody;
 
 			bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-			memcpy(bufferForPackageSent.recipientPubkey,waitingConfirmationSignature.recipientPubKey,45);
-			strcpy(bufferForPackageSent.recipientHub,byteduino_device.hub);
+			memcpy(bufferForPackageSent.recipientPubkey, waitingConfirmationSignature.recipientPubKey, 45);
+			strcpy(bufferForPackageSent.recipientHub, byteduino_device.hub);
 			bufferForPackageSent.isFree = false;
 			bufferForPackageSent.isRecipientKeyRequested = false;
 			message.printTo(bufferForPackageSent.message);
@@ -149,10 +149,10 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 					memcpy(waitingConfirmationSignature.recipientPubKey,recipientPubKey, 45);
 					memcpy(waitingConfirmationSignature.hash, hash, 32);
 					memcpy(waitingConfirmationSignature.sigb64, sigb64, 89);
-					strcpy(waitingConfirmationSignature.signing_path ,signing_path);
-					memcpy(waitingConfirmationSignature.address ,address, 33);
+					strcpy(waitingConfirmationSignature.signing_path, signing_path);
+					memcpy(waitingConfirmationSignature.address, address, 33);
 					waitingConfirmationSignature.isConfirmed = false;
-					waitingConfirmationSignature.isFree =false;
+					waitingConfirmationSignature.isFree = false;
 					if (_cbSignatureToConfirm){
 						_cbSignatureToConfirm(waitingConfirmationSignature.hash, waitingConfirmationSignature.JsonDigest);
 					}
