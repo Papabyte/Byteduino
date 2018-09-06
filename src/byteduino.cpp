@@ -126,7 +126,7 @@ void byteduino_loop(){
 	}
 	
 	if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested){
-		requestMessengerTempKey();
+		requestRecipientMessengerTempKey();
 	}
 	
 	if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){

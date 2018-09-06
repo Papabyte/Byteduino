@@ -13,12 +13,12 @@ void encryptAndSendPackage(){
 
 	const char * recipientTempMessengerkey = bufferForPackageSent.recipientTempMessengerkey;  
 	
-	uint8_t decompressedPubkey[64];
-	decodeAndDecompressPubKey(recipientTempMessengerkey,decompressedPubkey);
+	uint8_t recipientDecompressedPubkey[64];
+	decodeAndDecompressPubKey(recipientTempMessengerkey,recipientDecompressedPubkey);
 
 	uint8_t secret[32];
 
-	uECC_shared_secret(decompressedPubkey, myMessengerKeys.privateKey, secret, uECC_secp256k1());
+	uECC_shared_secret(recipientDecompressedPubkey, myMessengerKeys.privateKey, secret, uECC_secp256k1());
 
 	uint8_t hashedSecret[16];
 	getSHA256(hashedSecret, (const char*)secret, 32, 16);
@@ -93,7 +93,7 @@ void encryptAndSendPackage(){
 	bufferForPackageSent.isFree =true;
 	
 }
-void requestMessengerTempKey(){
+void requestRecipientMessengerTempKey(){
 
 	char output[256];
 	StaticJsonBuffer<200> jsonBuffer;
@@ -313,7 +313,7 @@ void respondToMessage(JsonObject& messageBody){
 }
 
 
-bool  checkMessageStructure(JsonObject& message){
+bool checkMessageStructure(JsonObject& message){
 	if (message["encrypted_package"].is<JsonObject>()) {
 		if (message["to"].is<char*>()) {
 			if (message["pubkey"].is<char*>()) {	

@@ -22,6 +22,6 @@ bool checkMessageStructure(JsonObject& message);
 void deleteMessageFromHub(const char* messageHash);
 void decryptPackageAndPlaceItInBuffer(JsonObject& message);
 void getMessageHashB64(char * hashB64, JsonObject& message);
-void requestMessengerTempKey();
+void requestRecipientMessengerTempKey();
 void checkAndUpdateRecipientKey(JsonObject& objResponse);
 void encryptAndSendPackage();
