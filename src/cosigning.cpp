@@ -132,21 +132,20 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 		removeKeyIfExisting("payload_uri", unsignedUnit["messages"][i]);
 	}
 	arrayDigest.add(objPayments);
-	
-	arrayDigest.printTo(waitingConfirmationSignature.JsonDigest);
-	Serial.println(waitingConfirmationSignature.JsonDigest);
 
 	uint8_t hash[32];
 	getSHA256ForJsonObject(hash, unsignedUnit);
 	char sigb64 [89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM4400, hash,32);
-																
+
 	const char * signing_path= body["signing_path"];
 	const char * address= body["address"];
 	if (signing_path != nullptr){
 		if(strlen(signing_path) < MAX_SIGNING_PATH_SIZE){
 			if (address != nullptr){
 				if (strlen(address) == 32){
+					arrayDigest.printTo(waitingConfirmationSignature.JsonDigest);
+					Serial.println(waitingConfirmationSignature.JsonDigest);
 					memcpy(waitingConfirmationSignature.recipientPubKey,recipientPubKey, 45);
 					memcpy(waitingConfirmationSignature.hash, hash, 32);
 					memcpy(waitingConfirmationSignature.sigb64, sigb64, 89);
