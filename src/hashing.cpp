@@ -123,11 +123,11 @@ template <class T> void updateHashForObject (T hasher, JsonObject& object) {
 				i--;
 			}
 			for (int j = numberOfKeysSorted; j>i;j--){
-				memcpy(sortedKeys[j],sortedKeys[j-1], strlen(sortedKeys[j-1])+1);
+				strcpy(sortedKeys[j], sortedKeys[j-1]);
 			}
-			memcpy(sortedKeys[i],it->key, strlen(it->key)+1);
+			strcpy(sortedKeys[i], it->key);
 		} else {
-			memcpy(sortedKeys[0],it->key,strlen(it->key)+1);
+			strcpy(sortedKeys[0], it->key);
 		}
 		numberOfKeysSorted++;
 	}
