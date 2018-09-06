@@ -23,46 +23,41 @@ Byteduino byteduino_device;
 
 void setHub(const char * hub){
 	if(strlen(hub) < MAX_HUB_STRING_SIZE){
-		memcpy(byteduino_device.hub,hub, strlen(hub));
+		strcpy(byteduino_device.hub,hub);
 	}
 }
 
 void setDeviceName(const char * deviceName){
 	if(strlen(deviceName) < MAX_DEVICE_NAME_STRING_SIZE){
-		memcpy(byteduino_device.deviceName,deviceName, strlen(deviceName)+1);
+		strcpy(byteduino_device.deviceName, deviceName);
 	}
 }
 
 void setExtPubKey(const char * extPubKey){
 	if(strlen(extPubKey) == 111){
-		memcpy(byteduino_device.keys.extPubKey,extPubKey, 112);
+		strcpy(byteduino_device.keys.extPubKey, extPubKey);
 	}
 }
 
 void setPrivateKeyM1(const char * privKeyB64){
-	decodeAndCopyPrivateKey(byteduino_device.keys.privateM1,privKeyB64);
+	decodeAndCopyPrivateKey(byteduino_device.keys.privateM1, privKeyB64);
 }
 
 void setPrivateKeyM4400(const char * privKeyB64){
-	decodeAndCopyPrivateKey(byteduino_device.keys.privateM4400,privKeyB64);
+	decodeAndCopyPrivateKey(byteduino_device.keys.privateM4400, privKeyB64);
 }
 
 
 void byteduino_init (){
 
 	//calculate device pub key
-	char pubkeyB64[45];
-	getCompressAndEncodePubKey (byteduino_device.keys.privateM1,pubkeyB64);
-	memcpy(byteduino_device.keys.publicKeyM1b64,pubkeyB64,45);
+	getCompressAndEncodePubKey(byteduino_device.keys.privateM1, byteduino_device.keys.publicKeyM1b64);
 	
 	//calculate wallet pub key
-	getCompressAndEncodePubKey (byteduino_device.keys.privateM4400,pubkeyB64);
-	memcpy(byteduino_device.keys.publicKeyM4400b64,pubkeyB64,45);
-	
+	getCompressAndEncodePubKey(byteduino_device.keys.privateM4400, byteduino_device.keys.publicKeyM4400b64);
+
 	//determine device address
-	char deviceAddress[34];
-	getDeviceAddress(byteduino_device.keys.publicKeyM1b64, deviceAddress);
-	memcpy(byteduino_device.deviceAddress,deviceAddress,34);
+	getDeviceAddress(byteduino_device.keys.publicKeyM1b64, byteduino_device.deviceAddress);
 	
 	//send device infos to serial
 	Serial.println(getDeviceInfos());
