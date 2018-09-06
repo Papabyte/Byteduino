@@ -101,7 +101,8 @@ To get verbose serial output, add `#define DEBUG_PRINT` to your sketch.
 Coming soon
 
 ##### Example sketches
-Check example sketches in example folder.
+Check example sketches in [examples folder](https://github.com/Papabyte/byteduino/tree/master/examples).
 
-
+- [echo.ino](https://github.com/Papabyte/byteduino/blob/master/examples/echo/echo.ino): send back to sender any text message received
+- [sign_anythin.ino](https://github.com/Papabyte/byteduino/blob/master/examples/sign_anything/sign_anything.ino): cosign any unit received
 
