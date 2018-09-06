@@ -1,0 +1,25 @@
+{
+    "name": "Byteduino-lib",
+    "description": "Micro implementation of Byteball",
+    "keywords": "byteball, crypto, bitcoin, iot",
+    "authors": [
+        {
+            "name": "Papabyte",
+            "url": "papabyte.com",
+            "maintainer": true
+        }
+    ],/*
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Links2004/arduinoWebSockets.git"
+    },*/
+    "version": "0.0.9",
+    "license": "LGPL-2.1",
+    "export": {
+        "exclude": [
+            "tests"
+        ]
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif8266, espressif32"
+}
