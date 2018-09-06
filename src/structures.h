@@ -62,7 +62,7 @@ typedef struct waitingConfirmationRoom{
 	bool isFree = true;
 	bool isConfirmed = false;
 	char recipientPubKey[45];
-	char signing_path[20];
+	char signing_path[MAX_SIGNING_PATH_SIZE];
 	char address[33];
 	uint8_t hash[32];
 	char sigb64[89];

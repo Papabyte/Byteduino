@@ -60,7 +60,7 @@ void treatWaitingSignature(){
 
 			bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
 			memcpy(bufferForPackageSent.recipientPubkey,waitingConfirmationSignature.recipientPubKey,45);
-			memcpy(bufferForPackageSent.recipientHub,byteduino_device.hub,strlen(byteduino_device.hub)+1);
+			strcpy(bufferForPackageSent.recipientHub,byteduino_device.hub);
 			bufferForPackageSent.isFree = false;
 			bufferForPackageSent.isRecipientKeyRequested = false;
 			message.printTo(bufferForPackageSent.message);
@@ -75,32 +75,6 @@ void treatWaitingSignature(){
 	}
 	
 }
-/*	"unsigned_unit": {
-			"version": "1.0t",
-			"alt": "2",
-			"messages": [{
-				"app": "data_feed",
-				"payload_location": "inline",
-				"payload_hash": "GgIxFXZw0uheXXnmwF0Wr8KEL1C7LcxcfqwrCJdlJ1U=",
-				"payload": {
-					"test": "1234"
-				}
-			}, {
-				"app": "payment",
-				"payload_location": "inline",
-				"payload_hash": "eqHXLjxWO3l5dcnxkE/sp54B2nC/bpKHVg108DFUlKY=",
-				"payload": {
-					"outputs": [{
-						"address": "ORH6FKZTWWNSQJETPL5WYRC32KZZZQLC",
-						"amount": 48996609
-					}],
-					"inputs": [{
-						"unit": "Drbo4dt05IYwDYE+yFWjc6mYHX7AeidzOaO4UiSGD30=",
-						"message_index": 0,
-						"output_index": 0
-					}]
-				}
-			}],*/
 
 
 void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObject& body){
@@ -108,7 +82,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 	JsonObject& unsignedUnit = body["unsigned_unit"];
 	int authorsSize = unsignedUnit["authors"].size();
 
-	for (int i = 0;i<authorsSize;i++){
+	for (int i=0; i < authorsSize; i++){
 		JsonObject& objAuthentifier = unsignedUnit["authors"][i];
 		objAuthentifier.remove("authentifiers");
 #ifdef DEBUG_PRINT
@@ -125,17 +99,17 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 	size_t messagesSize = unsignedUnit["messages"].size();
 	
 	//we create a JSON digest about what will signed
-	StaticJsonBuffer<400> jsonBuffer;
+	DynamicJsonBuffer jsonBuffer(1000);
 	JsonArray & arrayDigest = jsonBuffer.createArray();
 	JsonObject & objPayments= jsonBuffer.createObject();
-	for (size_t i = 0;i<messagesSize;i++){
+	for (size_t i=0; i < messagesSize; i++){
 		const char * app = unsignedUnit["messages"][i]["app"];
 		if (strcmp(app,"payment") == 0){
 			if (unsignedUnit["messages"][i]["payload"]["outputs"].is<JsonArray>()){
 				size_t outputsSize = unsignedUnit["messages"][i]["payload"]["outputs"].size();
 				for (size_t j = 0; j<outputsSize; j++){
 					const char* address = unsignedUnit["messages"][i]["payload"]["outputs"][j]["address"];
-					if (address!= nullptr) {
+					if (address != nullptr && strlen(address) == 32) {
 						if (unsignedUnit["messages"][i]["payload"]["outputs"][j]["amount"].is<int>()){
 							int amountToAdd = unsignedUnit["messages"][i]["payload"]["outputs"][j]["amount"];
 							if (!objPayments.containsKey(address)){
@@ -169,15 +143,40 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 																
 	const char * signing_path= body["signing_path"];
 	const char * address= body["address"];
-	memcpy(waitingConfirmationSignature.recipientPubKey ,recipientPubKey,45);
-	memcpy(waitingConfirmationSignature.hash ,hash,32);
-	memcpy(waitingConfirmationSignature.sigb64 ,sigb64,89);
-	memcpy(waitingConfirmationSignature.signing_path ,signing_path,strlen(signing_path)+1);
-	memcpy(waitingConfirmationSignature.address ,address, 33);
-	waitingConfirmationSignature.isConfirmed = false;
-	waitingConfirmationSignature.isFree =false;
-	if (_cbSignatureToConfirm){
-		_cbSignatureToConfirm(waitingConfirmationSignature.hash, waitingConfirmationSignature.JsonDigest);
+	if (signing_path != nullptr){
+		if(strlen(signing_path) < MAX_SIGNING_PATH_SIZE){
+			if (address != nullptr){
+				if (strlen(address) == 32){
+					memcpy(waitingConfirmationSignature.recipientPubKey,recipientPubKey, 45);
+					memcpy(waitingConfirmationSignature.hash, hash, 32);
+					memcpy(waitingConfirmationSignature.sigb64, sigb64, 89);
+					strcpy(waitingConfirmationSignature.signing_path ,signing_path);
+					memcpy(waitingConfirmationSignature.address ,address, 33);
+					waitingConfirmationSignature.isConfirmed = false;
+					waitingConfirmationSignature.isFree =false;
+					if (_cbSignatureToConfirm){
+						_cbSignatureToConfirm(waitingConfirmationSignature.hash, waitingConfirmationSignature.JsonDigest);
+					}
+				} else {
+#ifdef DEBUG_PRINT
+					Serial.println(F("wrong address size"));
+#endif
+				}
+				
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("address must be a string"));
+#endif
+				}
+		}else{
+#ifdef DEBUG_PRINT
+			Serial.println(F("signing_path too long"));
+#endif
+		}
+	}else{
+#ifdef DEBUG_PRINT
+		Serial.println(F("signing_path must be a string"));
+#endif
 	}
 }
 

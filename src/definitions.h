@@ -3,8 +3,11 @@
 #define UPDATE_MESSENGER_KEY "-2"
 #define GET_RECIPIENT_KEY "-3"
 
-//lengths
+//string sizes
 #define TAG_LENGTH 10
+#define MAX_SIGNING_PATH_SIZE 20
+#define MAX_HUB_STRING_SIZE 25
+#define MAX_DEVICE_NAME_STRING_SIZE 25
 
 //Flash map
 #define PREVIOUS_PRV_MESSENGER_KEY 0
@@ -30,8 +33,6 @@
 
 #define SENT_PACKAGE_BUFFER_SIZE 1000
 
-#define MAX_HUB_STRING_SIZE 25
-#define MAX_DEVICE_NAME_STRING_SIZE 25
 
 //cosigners
 #define MAX_COSIGNERS 6
