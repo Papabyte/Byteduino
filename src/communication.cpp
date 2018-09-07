@@ -181,45 +181,47 @@ bool sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, cons
 	if (bufferForPackageSent.isFree){
 		if (strlen(deviceHub) < MAX_HUB_STRING_SIZE){
 			if (strlen(recipientPubkey) == 44){
-				const size_t bufferSize = JSON_OBJECT_SIZE(4);
-				StaticJsonBuffer<bufferSize> jsonBuffer;
-				JsonObject & message = jsonBuffer.createObject();
-				message["from"] = (const char*) byteduino_device.deviceAddress;
-				message["device_hub"] = (const char*) byteduino_device.hub;
-				message["subject"] = "text";
+				if (strlen(text) < (SENT_PACKAGE_BUFFER_SIZE - 108)){
+					const size_t bufferSize = JSON_OBJECT_SIZE(4);
+					StaticJsonBuffer<bufferSize> jsonBuffer;
+					JsonObject & message = jsonBuffer.createObject();
+					message["from"] = (const char*) byteduino_device.deviceAddress;
+					message["device_hub"] = (const char*) byteduino_device.hub;
+					message["subject"] = "text";
 
-				message["body"]= text;
-				bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-				strcpy(bufferForPackageSent.recipientPubkey,recipientPubkey);
-				strcpy(bufferForPackageSent.recipientHub, deviceHub);
-				bufferForPackageSent.isFree = false;
-				bufferForPackageSent.isRecipientKeyRequested = false;
-				message.printTo(bufferForPackageSent.message);
+					message["body"]= text;
+					bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
+					strcpy(bufferForPackageSent.recipientPubkey,recipientPubkey);
+					strcpy(bufferForPackageSent.recipientHub, deviceHub);
+					bufferForPackageSent.isFree = false;
+					bufferForPackageSent.isRecipientKeyRequested = false;
+					message.printTo(bufferForPackageSent.message);
 #ifdef DEBUG_PRINT
-				Serial.println(bufferForPackageSent.message);
+					Serial.println(bufferForPackageSent.message);
 #endif
-			}else {
+					return true;
+				} else {
+#ifdef DEBUG_PRINT
+					Serial.println(F("text too long"));
+#endif
+				}
+			} else {
 #ifdef DEBUG_PRINT
 				Serial.println(F("wrong pub key size"));
 #endif
-		return false;
-	}
-
+			}
 		} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("hub url too long"));
 #endif
-			return false;
 		}
 
-		return true;
 	} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("Buffer not free to send message"));
 #endif
-		return false;
 	}
-
+	return false;
 }
 
 void treatReceivedPackage(){

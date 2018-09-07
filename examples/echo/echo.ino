@@ -8,7 +8,7 @@ ESP8266WiFiMulti WiFiMulti;
 void onTxtMessageReceived(const char* senderPubKey, const char* senderHub, const char* messageReceived) {
 
   if (!sendTxtMessage(senderPubKey, senderHub, messageReceived)) {
-    Serial.println(F("Buffer wasn't free, I couldn't send echo"));
+    Serial.println(F("I couldn't send echo")); //reason can be buffer not free, wrong size public key, too long message or hub url
   };
   //mind that parameters will be deleted after function ends, if you need to copy them then do it by value
 }
