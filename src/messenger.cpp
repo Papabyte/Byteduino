@@ -33,22 +33,23 @@ void encryptAndSendPackage(){
 	}
 	while (!getRandomNumbersForVector(iv, 12));
 
-	 char ivb64 [17];
+	char ivb64 [17];
 	Base64.encode(ivb64, (char *)iv, 12);
 
 	gcm.setIV(iv, 12);
-	
-	char message[400];
-	gcm.encrypt((uint8_t *)message, (uint8_t *)bufferForPackageSent.message ,  strlen(bufferForPackageSent.message));
 
+	char messageB64[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100];
+	size_t packageMessageLength = strlen(bufferForPackageSent.message);
+	gcm.encrypt((uint8_t *)messageB64, (uint8_t *)bufferForPackageSent.message, packageMessageLength); //unlike for decryption, encryption doesn't work well when usng same pointer as input and ouput
+	memcpy(bufferForPackageSent.message, messageB64, packageMessageLength);
 	gcm.computeTag(authTag,16);
 	char authTagB64 [25];
 	Base64.encode(authTagB64, (char *)authTag, 16);
 
-	char  messageB64[600];
-	Base64.encode(messageB64, message, strlen(bufferForPackageSent.message));
+	Base64.encode(messageB64, bufferForPackageSent.message, packageMessageLength);
 
-	DynamicJsonBuffer jsonBuffer(900);
+	const size_t bufferSize = JSON_ARRAY_SIZE(2) + 2*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(4);
+	DynamicJsonBuffer jsonBuffer(bufferSize);
 	JsonArray & mainArray = jsonBuffer.createArray();
 
 	mainArray.add("request");
@@ -60,19 +61,19 @@ void encryptAndSendPackage(){
 	JsonObject & objParams = jsonBuffer.createObject();
 
 	JsonObject & dh= jsonBuffer.createObject();
-	dh["sender_ephemeral_pubkey"] = myMessengerKeys.pubKeyB64;
-	dh["recipient_ephemeral_pubkey"] = recipientTempMessengerkey;
+	dh["sender_ephemeral_pubkey"] = (const char*) myMessengerKeys.pubKeyB64;
+	dh["recipient_ephemeral_pubkey"] = (const char*) recipientTempMessengerkey;
 
-	encryptedPackage["encrypted_message"] = messageB64;
-	encryptedPackage["iv"] = ivb64;
-	encryptedPackage["authtag"] = authTagB64;
+	encryptedPackage["encrypted_message"] = (const char*) messageB64;
+	encryptedPackage["iv"] = (const char*) ivb64;
+	encryptedPackage["authtag"] = (const char*) authTagB64;
 	encryptedPackage["dh"] = dh;
 
 	char deviceAddress[34];
 	getDeviceAddress(bufferForPackageSent.recipientPubkey, deviceAddress);
 	objParams["encrypted_package"] = encryptedPackage;
-	objParams["to"] = deviceAddress;
-	objParams["pubkey"] = byteduino_device.keys.publicKeyM1b64;
+	objParams["to"] = (const char*) deviceAddress;
+	objParams["pubkey"] = (const char*) byteduino_device.keys.publicKeyM1b64;
 	
 	uint8_t hash[32];
 	getSHA256ForJsonObject (hash, objParams);
@@ -80,16 +81,16 @@ void encryptAndSendPackage(){
 	char sigb64[89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM1, hash,32);
 
-	objParams["signature"] = sigb64;
+	objParams["signature"] = (const char*) sigb64;
 
 	objRequest["params"] = objParams;
 	mainArray.add(objRequest);
-	mainArray.printTo(bufferForPackageSent.message);
-	yield();
+	char output[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100 + 520];
+	mainArray.printTo(output);
 #ifdef DEBUG_PRINT
-	Serial.println(bufferForPackageSent.message);
+	Serial.println(output);
 #endif
-	webSocketForHub.sendTXT(bufferForPackageSent.message);
+	webSocketForHub.sendTXT(output);
 	bufferForPackageSent.isFree =true;
 	
 }

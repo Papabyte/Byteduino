@@ -31,7 +31,7 @@
 #define RECEIVED false
 
 
-#define SENT_PACKAGE_BUFFER_SIZE 1000
+#define SENT_PACKAGE_BUFFER_SIZE 500
 
 
 //cosigners

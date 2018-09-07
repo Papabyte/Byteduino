@@ -131,6 +131,7 @@ void byteduino_loop(){
 	
 	if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
 		encryptAndSendPackage();
+		yield();
 	}
 	
 	if (baseTickOccured == true) {
