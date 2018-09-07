@@ -28,11 +28,13 @@ void readWalletsJson(char * json){
 void saveWalletDefinitionInFlash(const char* wallet,const char* wallet_name, JsonArray& wallet_definition_template){
 	char output[WALLETS_CREATED_FLASH_SIZE];
 	char input[WALLETS_CREATED_FLASH_SIZE];
-	char templateString[WALLETS_CREATED_FLASH_SIZE/2];
-	DynamicJsonBuffer jb(500);
+	char templateString[(int)WALLETS_CREATED_FLASH_SIZE*7/10];//templates definition size shouldn't take more than 0.7x the size of raw JSON
+	DynamicJsonBuffer jb((int)WALLETS_CREATED_FLASH_SIZE*0.5); //this JSON needs a buffer of around half the size of its raw size
 	wallet_definition_template.printTo(templateString);
 	readWalletsJson(input);
+#ifdef DEBUG_PRINT
 	Serial.println(input);
+#endif
 	JsonObject& objectWallets = jb.parseObject(input);
 	
 	if (objectWallets.success()){

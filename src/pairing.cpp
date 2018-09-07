@@ -29,11 +29,11 @@ void readPairedDevicesJson(char * json){
 void savePeerInFlash(char peerPubkey[45],const char * peerHub, const char * peerName){
 	char output[PAIRED_DEVICES_FLASH_SIZE];
 	char input[PAIRED_DEVICES_FLASH_SIZE];
-
-	DynamicJsonBuffer jb(500);
-
+	DynamicJsonBuffer jb((int) PAIRED_DEVICES_FLASH_SIZE*0.65); //this JSON needs a buffer of around x0.65 the size of its raw size
 	readPairedDevicesJson(input);
+#ifdef DEBUG_PRINT
 	Serial.println(input);
+#endif
 	JsonObject& objectPeers = jb.parseObject(input);
 	if (objectPeers.success()){
 		DynamicJsonBuffer jb2(250);
