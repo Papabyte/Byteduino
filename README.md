@@ -104,7 +104,7 @@ Copy paste in your sketch the 3 functions with keys as parameters to configre yo
 
 
 This code connects your device to wifi network, starts a websocket and authenticates to the hub.
-By default the device will acknowledge any pairing or wallet creation request.
+By default the device will acknowledge any pairing or wallet creation request (**for single address wallet only**).
 
 The serial monitor should return this:
 ```

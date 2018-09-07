@@ -87,51 +87,53 @@ void handleNewWalletRequest(char initiatiorPubKey [45], JsonObject& package){
 
 	const char* wallet = package["body"]["wallet"];
 	if (wallet != nullptr){
-		
-		if(package["body"]["other_cosigners"].is<JsonArray>()){
-			if (package["body"]["other_cosigners"].size() > 0){
-				newWallet.isCreating = true;
-				memcpy(newWallet.initiatorPubKey,initiatiorPubKey,45);
-				memcpy(newWallet.id,wallet,45);
-			
-				int otherCosignersSize = package["body"]["other_cosigners"].size();
-				for (int i; i < otherCosignersSize;i++){
-					const  char* device_address = package["body"]["other_cosigners"][i]["device_address"];
-					const  char* pubkey = package["body"]["other_cosigners"][i]["pubkey"];
-					
-					if (pubkey != nullptr && device_address != nullptr){
+		if (package["body"]["is_single_address"].is<bool>() && package["body"]["is_single_address"]){
+			if(package["body"]["other_cosigners"].is<JsonArray>()){
+				if (package["body"]["other_cosigners"].size() > 0){
+					newWallet.isCreating = true;
+					memcpy(newWallet.initiatorPubKey,initiatiorPubKey,45);
+					memcpy(newWallet.id,wallet,45);
 
-						if (strcmp(device_address,byteduino_device.deviceAddress) != 0){
+					int otherCosignersSize = package["body"]["other_cosigners"].size();
+					for (int i; i < otherCosignersSize;i++){
+						const  char* device_address = package["body"]["other_cosigners"][i]["device_address"];
+						const  char* pubkey = package["body"]["other_cosigners"][i]["pubkey"];
 
-							newWallet.xPubKeyQueue[i].isFree = false;
-							memcpy(newWallet.xPubKeyQueue[i].recipientPubKey,pubkey,45);
+						if (pubkey != nullptr && device_address != nullptr){
+
+							if (strcmp(device_address,byteduino_device.deviceAddress) != 0){
+
+								newWallet.xPubKeyQueue[i].isFree = false;
+								memcpy(newWallet.xPubKeyQueue[i].recipientPubKey,pubkey,45);
+							}
+
 						}
-
 					}
-				}
-				newWallet.xPubKeyQueue[otherCosignersSize+1].isFree = false;
-				memcpy(newWallet.xPubKeyQueue[otherCosignersSize+1].recipientPubKey,initiatiorPubKey,45);
+					newWallet.xPubKeyQueue[otherCosignersSize+1].isFree = false;
+					memcpy(newWallet.xPubKeyQueue[otherCosignersSize+1].recipientPubKey,initiatiorPubKey,45);
 
-				const char* wallet_name = package["body"]["wallet_name"];
-				if (wallet_name != nullptr && package["body"]["wallet_definition_template"].is<JsonArray>()){
-					saveWalletDefinitionInFlash(wallet, wallet_name, package["body"]["wallet_definition_template"]);
+					const char* wallet_name = package["body"]["wallet_name"];
+					if (wallet_name != nullptr && package["body"]["wallet_definition_template"].is<JsonArray>()){
+						saveWalletDefinitionInFlash(wallet, wallet_name, package["body"]["wallet_definition_template"]);
+					} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("wallet_definition_template and wallet_name must be char"));
+#endif
+				}
 				} else {
 #ifdef DEBUG_PRINT
-			Serial.println(F("wallet_definition_template and wallet_name must be char"));
+				Serial.println(F("other_cosigners cannot be empty"));
+#endif
+				}
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("other_cosigners must be an array"));
 #endif
 			}
-
-			} else{
-#ifdef DEBUG_PRINT
-			Serial.println(F("other_cosigners cannot be empty"));
-#endif
-			}
-		}else{
-#ifdef DEBUG_PRINT
-			Serial.println(F("other_cosigners must be an array"));
-#endif
+		} else {
+		Serial.println(F("Wallet must single address wallet"));
 		}
-	}else{
+	} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("Wallet must be a char"));
 #endif
