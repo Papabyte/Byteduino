@@ -37,7 +37,30 @@ Some external libraries are required. You can add them to your Arduino IDE throu
 Other third party code that needed to be tweaked is included in the project under the /libs folder.
 
 ##### Keys generation
-coming soon
+For now the Byteduino device doesn't generate the private key used to derive identification and payments addresses for 2 reasons:
+ - the hardware random number generator embedded in the chip is poorly document and we are not sure it's cryptographically secure.
+ - we need to derive an extended pubkey to be provided to other cosigners, the required code isn't not implemented yet.
+
+So we use a good old computer to generate keys and we configure the Byteduino device in its sketch.
+
+The keys generation script is in the [extras/keys-generator/](https://github.com/Papabyte/byteduino/blob/master/extras/keys-generator/) folder.
+After having installed nodejs on your computer go in this folder and execute `npm install` then `node generate.js`. The console will prompt you to input a seed if you want to restore a previous configuration or simply press enter to generate a new seed.
+```Enter your seed or just press enter to generate a new one
+
+Seed: come stick across panda father nurse butter rural crew virtual copy eternal
+////// It's strongly recommended to write down this seed. \\\
+
+Configure your Byteduino device by adding these functions in your setup():
+
+setPrivateKeyM1("XBptNVmXD6iIV/9v8fWcW3u6ppoLruHmkVOOhDq3qhY=");
+setExtPubKey("xpub6DTHVh8wc4U8x8zxwo8uYHFGD6M5FMtqbb9p7EutDWsGd1YNKvxVoC9dHV2jgUs3J7P8q7rHiGY9UkYqkdNfH95YdDSRRMaxCGcU8ScGsRa");
+setPrivateKeyM4400("QPrHIP3fhPdLFfnXEXakwMegMm0IQRCmbQBCl/y4Iiw=");
+
+The default pairing code will be:
+A/n+A6gRfqy7GI19pMCRoDCPY8KOyy8Khruz0dlvrqhb@byteball.org/bb#0000
+A/n+A6gRfqy7GI19pMCRoDCPY8KOyy8Khruz0dlvrqhb@byteball.org/bb-test#0000 for testnet
+```
+Copy paste in your sketch the 3 functions with keys as parameters to configre your device.
 
 ##### Minimal sketch
 
