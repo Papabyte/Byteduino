@@ -164,26 +164,28 @@ void treatNewWalletCreation(){
 }
 	
 bool sendWalletFullyApproved(const char recipientPubKey[45]){
-	
+
 	if (bufferForPackageSent.isFree){
-		char output[200];
-		StaticJsonBuffer<400> jsonBuffer;
+		const size_t bufferSize = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(4);
+		StaticJsonBuffer<bufferSize> jsonBuffer;
 		JsonObject & message = jsonBuffer.createObject();
-		message["from"] = byteduino_device.deviceAddress;
-		message["device_hub"] = byteduino_device.hub;
+		message["from"] = (const char*) byteduino_device.deviceAddress;
+		message["device_hub"] = (const char*) byteduino_device.hub;
 		message["subject"] = "wallet_fully_approved";
 
 		JsonObject & objBody = jsonBuffer.createObject();
-		objBody["wallet"]= newWallet.id;
+		objBody["wallet"]= (const char*) newWallet.id;
 		message["body"]= objBody;
 
 		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
 		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
-		memcpy(bufferForPackageSent.recipientHub,byteduino_device.hub,strlen(byteduino_device.hub)+1);
+		strcpy(bufferForPackageSent.recipientHub,byteduino_device.hub);
 		bufferForPackageSent.isFree = false;
 		bufferForPackageSent.isRecipientKeyRequested = false;
 		message.printTo(bufferForPackageSent.message);
+#ifdef DEBUG_PRINT
 		Serial.println(bufferForPackageSent.message);
+#endif
 		return true;
 	} else {
 #ifdef DEBUG_PRINT
@@ -191,8 +193,6 @@ bool sendWalletFullyApproved(const char recipientPubKey[45]){
 #endif
 		return false;
 	}
-	
-	
 }
 
 bool sendXpubkeyTodevice(const char recipientPubKey[45]){
@@ -226,7 +226,5 @@ bool sendXpubkeyTodevice(const char recipientPubKey[45]){
 #endif
 		return false;
 	}
-
-	
 }
 
