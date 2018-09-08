@@ -16,7 +16,7 @@ void readWalletsJson(char * json){
 			json[i] = EEPROM.read(WALLETS_CREATED+i);
 		}
 		while (json[i] != 0x00 && i < (WALLETS_CREATED_FLASH_SIZE));
-		json[WALLETS_CREATED_FLASH_SIZE]=0x00;
+		json[WALLETS_CREATED_FLASH_SIZE-1]=0x00;
 	}else{
 		json[0] = 0x7B;
 		json[1] = 0x7D;

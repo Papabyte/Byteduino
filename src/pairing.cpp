@@ -15,7 +15,7 @@ void readPairedDevicesJson(char * json){
 			json[i] = EEPROM.read(PAIRED_DEVICES+i);
 		}
 		while (json[i] != 0x00 && i < (PAIRED_DEVICES_FLASH_SIZE));
-		json[PAIRED_DEVICES_FLASH_SIZE]=0x00;
+		json[PAIRED_DEVICES_FLASH_SIZE-1]=0x00;
 
 	}else{
 		json[0] = 0x7B;//{
@@ -56,7 +56,6 @@ void savePeerInFlash(char peerPubkey[45],const char * peerHub, const char * peer
 		Serial.println(F("No flash available to store peer"));
 #endif
 		}
-
 		int i = -1; 
 		do {
 			i++;
@@ -73,47 +72,70 @@ void savePeerInFlash(char peerPubkey[45],const char * peerHub, const char * peer
 
 
 void handlePairingRequest(JsonObject& package){
-
-	if (package["body"]["reverse_pairing_secret"].is<char*>()&&package["body"]["device_name"].is<char*>()){
-		char correspondentAddress[34];
-	//	getDeviceAddress(bufferForPackageReceived.senderPubkey,correspondentAddress);
-
-		if (package["device_hub"].is<char*>()){
-			acknowledgePairingRequest(bufferForPackageReceived.senderPubkey, package["device_hub"], package["body"]["reverse_pairing_secret"]);
-			savePeerInFlash(bufferForPackageReceived.senderPubkey, package["device_hub"], package["body"]["device_name"]);
-			//	connectSecondaryWebsocket();
-		} else {
+	const char * reverse_pairing_secret = package["body"]["reverse_pairing_secret"];
+	const char * device_hub = package["device_hub"];
+	const char * device_name = package["body"]["device_name"];
+	if (reverse_pairing_secret != nullptr){
+		if(strlen(reverse_pairing_secret) < MAX_PAIRING_SECRET_STRING_SIZE){
+			if (device_hub != nullptr){
+				if(strlen(device_hub) < MAX_HUB_STRING_SIZE){
+					if (device_name != nullptr){
+						if(strlen(device_name) < MAX_DEVICE_NAME_STRING_SIZE){
+							acknowledgePairingRequest(bufferForPackageReceived.senderPubkey, device_hub, reverse_pairing_secret);
+							savePeerInFlash(bufferForPackageReceived.senderPubkey, device_hub, device_name);
+						} else {
 #ifdef DEBUG_PRINT
-			Serial.println(F("device_hub and device_name must be a char"));
+							Serial.println(F("device_hub is too long"));
+#endif
+						}
+					} else {
+#ifdef DEBUG_PRINT
+						Serial.println(F("device_name must be a char"));
+#endif
+						}
+				} else {
+#ifdef DEBUG_PRINT
+					Serial.println(F("device_hub is too long"));
+#endif
+				}
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("device_hub must be a char"));
+#endif
+			}
+		}else {
+#ifdef DEBUG_PRINT
+			Serial.println(F("reverse_pairing_secret is too long"));
 #endif
 		}
-	
-	}else{
+
+	} else {
 #ifdef DEBUG_PRINT
-			Serial.println(F("Reverse secret must be a char"));
+		Serial.println(F("reverse_pairing_secret must be a char"));
 #endif
 	}
 
 }
 
 
-
 void acknowledgePairingRequest(char senderPubkey [45],const char * deviceHub, const char * reversePairingSecret){
 
-	char output[150];
-	StaticJsonBuffer<400> jsonBuffer;
+	char output[130 + MAX_HUB_STRING_SIZE + MAX_DEVICE_NAME_STRING_SIZE + MAX_PAIRING_SECRET_STRING_SIZE];
+	const size_t bufferSize = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonObject & message = jsonBuffer.createObject();
 	JsonObject & body = jsonBuffer.createObject();
-	message["from"] = byteduino_device.deviceAddress;
-	message["device_hub"] = "byteball.org/bb-test";
+	message["from"] = (const char *) byteduino_device.deviceAddress;
+	message["device_hub"] = (const char *) byteduino_device.hub;
 	message["subject"] = "pairing";
 
 	body["pairing_secret"] = reversePairingSecret;
-	body["device_name"] = byteduino_device.deviceName;
+	body["device_name"] = (const char *) byteduino_device.deviceName;
 	message["body"]= body;
+	
 	bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
 	memcpy(bufferForPackageSent.recipientPubkey,senderPubkey,45);
-	memcpy(bufferForPackageSent.recipientHub,deviceHub,strlen(deviceHub));
+	strcpy(bufferForPackageSent.recipientHub, deviceHub);
 	bufferForPackageSent.isFree = false;
 	bufferForPackageSent.isRecipientKeyRequested = false;
 	message.printTo(bufferForPackageSent.message);
