@@ -31,4 +31,7 @@
 //cosigners
 #define MAX_COSIGNERS 6
 
-
+//device specific
+#ifdef ESP8266
+#define UNIQUE_WEBSOCKET
+#endif

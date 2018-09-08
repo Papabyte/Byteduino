@@ -11,6 +11,16 @@ extern bufferPackageSent bufferForPackageSent;
 
 void encryptAndSendPackage(){
 
+#ifdef UNIQUE_WEBSOCKET
+if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
+#ifdef DEBUG_PRINT
+	Serial.println(F("Recipient must be on the same hub"));
+#endif 
+	bufferForPackageSent.isFree = true;
+	return;
+}
+#endif
+	
 	const char * recipientTempMessengerkey = bufferForPackageSent.recipientTempMessengerkey;  
 	
 	uint8_t recipientDecompressedPubkey[64];

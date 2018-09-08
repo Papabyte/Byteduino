@@ -40,7 +40,7 @@ typedef struct bufferPackageReceived{
 typedef struct bufferPackageSent{
 	char message[SENT_PACKAGE_BUFFER_SIZE];
 	char recipientPubkey[45];
-	char recipientHub[50];
+	char recipientHub[MAX_HUB_STRING_SIZE];
 	char recipientTempMessengerkey[45];
 	bool isRecipientTempMessengerKeyKnown = false;
 	bool isFree = true;
