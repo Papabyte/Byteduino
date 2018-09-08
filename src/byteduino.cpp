@@ -10,15 +10,12 @@ extern "C" {
 WebSocketsClient webSocketForHub;
 //WebSocketsClient secondaryWebSocket;
 
-bufferPackageReceived bufferForPackageReceived;
-bufferPackageSent bufferForPackageSent;
 os_timer_t baseTimer;
 bool baseTickOccured = false;
 byte job2Seconds = 0;
-bool isByteduinoInitialized = false;
-bool isMessengerKeyTobeRotated = true;
+bufferPackageReceived bufferForPackageReceived;
+bufferPackageSent bufferForPackageSent;
 Byteduino byteduino_device; 
-
 
 
 void setHub(const char * hub){
@@ -72,6 +69,8 @@ void byteduino_init (){
 	EEPROM.begin(TOTAL_USED_FLASH);
 	
 	uECC_set_rng(&getRandomNumbersForUecc);
+	
+	byteduino_device.isInitialized = true;
 
 	//	secondaryWebSocket.beginSSL(byteduino_device.hub, 443,  "/bb-test");
 	//secondaryWebSocket.onEvent(secondaryWebSocketEvent);
@@ -119,7 +118,7 @@ void byteduino_loop(){
 	yield();
 	//secondaryWebSocket.loop();
 	
-	if (isByteduinoInitialized){
+	if (byteduino_device.isInitialized){
 		treatReceivedPackage();
 		treatNewWalletCreation();
 		treatWaitingSignature();
@@ -146,13 +145,12 @@ void byteduino_loop(){
 	
 	updateRandomPool();
 
-	if (!isByteduinoInitialized && isRandomGeneratorReady()){
-		isByteduinoInitialized = true;
+	if (!byteduino_device.isInitialized && isRandomGeneratorReady()){
 		byteduino_init ();
 	}
 	
-	if (isMessengerKeyTobeRotated && byteduino_device.isAuthenticated){
-		isMessengerKeyTobeRotated = false;
+	if (byteduino_device.isMessengerKeyTobeRotated && byteduino_device.isAuthenticated){
+		byteduino_device.isMessengerKeyTobeRotated = false;
 		setAndSendNewMessengerKey();
 	}
 	

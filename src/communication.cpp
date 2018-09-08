@@ -12,10 +12,6 @@ extern bufferPackageReceived bufferForPackageReceived;
 extern bufferPackageSent bufferForPackageSent;
 cbMessageReceived _cbMessageReceived;
 
-/*
-void dummyCbMessageReceived (const char* senderPubKey, const char* senderHub, const char* messageReceived){
-}*/
-
 
 void setCbTxtMessageReceived(cbMessageReceived cbToSet){
 _cbMessageReceived = cbToSet;

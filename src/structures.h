@@ -14,8 +14,10 @@ typedef struct Byteduino{
 	keyring keys;
 	char hub[MAX_HUB_STRING_SIZE];
 	int port = 443;
+	bool isInitialized = false;
 	bool isConnected = false;
 	bool isAuthenticated = false;
+	bool isMessengerKeyTobeRotated = true;
 	char deviceName[MAX_DEVICE_NAME_STRING_SIZE];
 	char deviceAddress[34];
 
