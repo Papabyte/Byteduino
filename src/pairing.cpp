@@ -118,7 +118,7 @@ void handlePairingRequest(JsonObject& package){
 }
 
 
-void acknowledgePairingRequest(char senderPubkey [45],const char * deviceHub, const char * reversePairingSecret){
+void acknowledgePairingRequest(char recipientPubKey [45],const char * recipientHub, const char * reversePairingSecret){
 
 	char output[130 + MAX_HUB_STRING_SIZE + MAX_DEVICE_NAME_STRING_SIZE + MAX_PAIRING_SECRET_STRING_SIZE];
 	const size_t bufferSize = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4);
@@ -132,13 +132,10 @@ void acknowledgePairingRequest(char senderPubkey [45],const char * deviceHub, co
 	body["pairing_secret"] = reversePairingSecret;
 	body["device_name"] = (const char *) byteduino_device.deviceName;
 	message["body"]= body;
-	
-	bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-	memcpy(bufferForPackageSent.recipientPubkey,senderPubkey,45);
-	strcpy(bufferForPackageSent.recipientHub, deviceHub);
-	bufferForPackageSent.isFree = false;
-	bufferForPackageSent.isRecipientKeyRequested = false;
+
 	message.printTo(bufferForPackageSent.message);
+	loadBufferPackageSent(recipientPubKey, recipientHub);
+
 #ifdef DEBUG_PRINT
 	Serial.println(bufferForPackageSent.message);
 #endif

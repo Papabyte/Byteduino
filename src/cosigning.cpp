@@ -58,12 +58,8 @@ void treatWaitingSignature(){
 
 			message["body"]= objBody;
 
-			bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-			memcpy(bufferForPackageSent.recipientPubkey, waitingConfirmationSignature.recipientPubKey, 45);
-			strcpy(bufferForPackageSent.recipientHub, byteduino_device.hub);
-			bufferForPackageSent.isFree = false;
-			bufferForPackageSent.isRecipientKeyRequested = false;
 			message.printTo(bufferForPackageSent.message);
+			loadBufferPackageSent(waitingConfirmationSignature.recipientPubKey, waitingConfirmationSignature.recipientHub);
 #ifdef DEBUG_PRINT
 			Serial.println(bufferForPackageSent.message);
 #endif
@@ -77,7 +73,7 @@ void treatWaitingSignature(){
 }
 
 
-void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObject& body){
+void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char * recipientHub, JsonObject& body){
 
 	JsonObject& unsignedUnit = body["unsigned_unit"];
 	int authorsSize = unsignedUnit["authors"].size();
@@ -151,6 +147,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObjec
 					memcpy(waitingConfirmationSignature.sigb64, sigb64, 89);
 					strcpy(waitingConfirmationSignature.signing_path, signing_path);
 					memcpy(waitingConfirmationSignature.address, address, 33);
+					strcpy(waitingConfirmationSignature.recipientHub, recipientHub);
 					waitingConfirmationSignature.isConfirmed = false;
 					waitingConfirmationSignature.isFree = false;
 					if (_cbSignatureToConfirm){
@@ -190,17 +187,23 @@ void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPack
 				for (int i = 0;i<arraySize;i++){
 					if(receivedPackage["body"]["unsigned_unit"]["messages"][i].is<JsonObject>()){
 						if(receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"].is<JsonObject>()){
-							const char * payloadHash = receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload_hash"];
-							char hashB64[45];
-							getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"]);
-							if (strcmp(hashB64,payloadHash) == 0){
-								stripSignAndAddToConfirmationRoom(senderPubkey,receivedPackage["body"]);
-							}else{
-#ifdef DEBUG_PRINT
-							Serial.println(F("payload hash does not match"));
-							Serial.println(hashB64);
-							Serial.println(payloadHash);
-#endif
+							
+							const char* device_hub = receivedPackage["device_hub"];
+							if (device_hub != nullptr){
+								if(strlen(device_hub) < MAX_HUB_STRING_SIZE){
+									const char * payloadHash = receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload_hash"];
+									char hashB64[45];
+									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"]);
+									if (strcmp(hashB64,payloadHash) == 0){
+										stripSignAndAddToConfirmationRoom(senderPubkey,device_hub, receivedPackage["body"]);
+									}else{
+		#ifdef DEBUG_PRINT
+									Serial.println(F("payload hash does not match"));
+									Serial.println(hashB64);
+									Serial.println(payloadHash);
+		#endif
+									}
+								}
 							}
 
 						}else{

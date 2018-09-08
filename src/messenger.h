@@ -25,3 +25,4 @@ void getMessageHashB64(char * hashB64, JsonObject& message);
 void requestRecipientMessengerTempKey();
 void checkAndUpdateRecipientKey(JsonObject& objResponse);
 void encryptAndSendPackage();
+void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub);

@@ -4,20 +4,20 @@
 
 #### Introduction
 
-[Byteball](byteball.org) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IOT devices. This library is made to help hobbyists and professionals to implement Byteball into microcontrollers and build cool and original projects.
+[Byteball](byteball.org) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Byteball into microcontrollers and build cool and original projects.
 
 #### What can I do with this library?
 
 ##### Encrypted messenging
-Byteball protocol integrates a communication layer that is used in background to exchange data like smart-contract definitions or private assets history and by humans for private chat.
+Byteball protocol integrates a communication layer that is used for private chat but also in background to exchange data like smart-contract definitions or private assets history.
 Independently from any posting in DAG, this layer is available on your Byteduino device for your own benefits:
 - Deploy state of the art cryptography based on ECDSA signing and AES encryption. You are sure of the identity of your correspondent and protect your communication even from the middle-men.
-- Don't run a server that relays messages, you use those from Byteball network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
-- You can chat with your device using any GUI Byteball wallet running on macOS, Android, Iphone, Linux and Windows.
-- Your can write an application on javascript on top of an [headless wallet](https://github.com/byteball/headless-byteball) and have it interacting with your device.
+- Don't run a server that relays messages, use those from Byteball network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
+- Chat with your device using any GUI Byteball wallet running on macOS, Android, Iphone, Linux or Windows.
+- Write Javascript application on top of an [headless wallet](https://github.com/byteball/headless-byteball) and have it interacting with your device.
 
 ##### Transaction cosigning
-On such small device, it will never be possible to implement a full-featured Byteball client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosign
+On such small device, it will never be possible to implement a full-featured Byteball client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosign.
 after having checked only critical points. This way we ensure that the transaction has been ordered by the Byteduino device although the distant server could have been compromized.
 Beside sending payments, this technic can be used to post data into the immutable public ledger while proving they existed at time they were posted.
 

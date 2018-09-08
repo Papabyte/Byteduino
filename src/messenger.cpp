@@ -104,6 +104,16 @@ if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
 	bufferForPackageSent.isFree =true;
 	
 }
+
+
+void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub){
+		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
+		strcpy(bufferForPackageSent.recipientHub,recipientHub);
+		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
+		bufferForPackageSent.isFree = false;
+		bufferForPackageSent.isRecipientKeyRequested = false;
+}
+
 void requestRecipientMessengerTempKey(){
 
 	char output[130];

@@ -50,6 +50,7 @@ typedef struct bufferPackageSent{
 typedef struct queueXpubkeyTobeSent{
 	bool isFree = true;
 	char recipientPubKey[45];
+	char recipientHub[MAX_HUB_STRING_SIZE];
 } queueXpubkeyTobeSent;
 
 typedef struct walletCreation{
@@ -57,6 +58,7 @@ typedef struct walletCreation{
 	queueXpubkeyTobeSent xPubKeyQueue[MAX_COSIGNERS];
 	char id[45];
 	char initiatorPubKey[45];
+	char initiatorHub[MAX_HUB_STRING_SIZE];
 } walletCreation;
 
 
@@ -64,6 +66,7 @@ typedef struct waitingConfirmationRoom{
 	bool isFree = true;
 	bool isConfirmed = false;
 	char recipientPubKey[45];
+	char recipientHub[MAX_HUB_STRING_SIZE];
 	char signing_path[MAX_SIGNING_PATH_SIZE];
 	char address[33];
 	uint8_t hash[32];

@@ -89,28 +89,36 @@ void handleNewWalletRequest(char initiatiorPubKey [45], JsonObject& package){
 	if (wallet != nullptr){
 		if (package["body"]["is_single_address"].is<bool>() && package["body"]["is_single_address"]){
 			if(package["body"]["other_cosigners"].is<JsonArray>()){
-				if (package["body"]["other_cosigners"].size() > 0){
-					newWallet.isCreating = true;
-					memcpy(newWallet.initiatorPubKey,initiatiorPubKey,45);
-					memcpy(newWallet.id,wallet,45);
+				int otherCosignersSize = package["body"]["other_cosigners"].size();
+				if (otherCosignersSize > 0){
+					const char * initiator_device_hub = package["device_hub"];
+					if (initiator_device_hub != nullptr && strlen(initiator_device_hub) < MAX_HUB_STRING_SIZE){
+						newWallet.isCreating = true;
+						strcpy(newWallet.initiatorHub, initiator_device_hub);
+						memcpy(newWallet.initiatorPubKey,initiatiorPubKey,45);
+						memcpy(newWallet.id,wallet,45);
 
-					int otherCosignersSize = package["body"]["other_cosigners"].size();
-					for (int i; i < otherCosignersSize;i++){
-						const  char* device_address = package["body"]["other_cosigners"][i]["device_address"];
-						const  char* pubkey = package["body"]["other_cosigners"][i]["pubkey"];
+						
+						for (int i; i < otherCosignersSize;i++){
+							const  char* device_address = package["body"]["other_cosigners"][i]["device_address"];
+							const  char* pubkey = package["body"]["other_cosigners"][i]["pubkey"];
+							const  char* device_hub = package["body"]["other_cosigners"][i]["device_hub"];
 
-						if (pubkey != nullptr && device_address != nullptr){
+							if (pubkey != nullptr && device_address != nullptr && device_hub != nullptr){
+								if (strlen(device_hub) < MAX_HUB_STRING_SIZE){
+									if (strcmp(device_address, byteduino_device.deviceAddress) != 0){
+										newWallet.xPubKeyQueue[i].isFree = false;
+										memcpy(newWallet.xPubKeyQueue[i].recipientPubKey, pubkey,45);
+										strcpy(newWallet.xPubKeyQueue[i].recipientHub, device_hub);
+									}
+								}
 
-							if (strcmp(device_address,byteduino_device.deviceAddress) != 0){
-
-								newWallet.xPubKeyQueue[i].isFree = false;
-								memcpy(newWallet.xPubKeyQueue[i].recipientPubKey,pubkey,45);
 							}
-
 						}
 					}
 					newWallet.xPubKeyQueue[otherCosignersSize+1].isFree = false;
-					memcpy(newWallet.xPubKeyQueue[otherCosignersSize+1].recipientPubKey,initiatiorPubKey,45);
+					memcpy(newWallet.xPubKeyQueue[otherCosignersSize+1].recipientPubKey, initiatiorPubKey, 45);
+					strcpy(newWallet.xPubKeyQueue[otherCosignersSize+1].recipientHub, initiator_device_hub);
 
 					const char* wallet_name = package["body"]["wallet_name"];
 					if (wallet_name != nullptr && package["body"]["wallet_definition_template"].is<JsonArray>()){
@@ -152,20 +160,20 @@ void treatNewWalletCreation(){
 			
 			if (!newWallet.xPubKeyQueue[i].isFree){
 				isQueueEmpty = false;
-				if(sendXpubkeyTodevice(newWallet.xPubKeyQueue[i].recipientPubKey)){
+				if(sendXpubkeyTodevice(newWallet.xPubKeyQueue[i].recipientPubKey, newWallet.xPubKeyQueue[i].recipientHub)){
 					newWallet.xPubKeyQueue[i].isFree = true;
 				}
 			}
 		}
 		if (isQueueEmpty){
-			if (sendWalletFullyApproved(newWallet.initiatorPubKey)){
+			if (sendWalletFullyApproved(newWallet.initiatorPubKey, newWallet.initiatorHub)){
 				newWallet.isCreating = false;
 			}
 		}
 	}
 }
 	
-bool sendWalletFullyApproved(const char recipientPubKey[45]){
+bool sendWalletFullyApproved(const char recipientPubKey[45], const char * recipientHub){
 
 	if (bufferForPackageSent.isFree){
 		const size_t bufferSize = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(4);
@@ -179,11 +187,7 @@ bool sendWalletFullyApproved(const char recipientPubKey[45]){
 		objBody["wallet"]= (const char*) newWallet.id;
 		message["body"]= objBody;
 
-		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
-		strcpy(bufferForPackageSent.recipientHub,byteduino_device.hub);
-		bufferForPackageSent.isFree = false;
-		bufferForPackageSent.isRecipientKeyRequested = false;
+		loadBufferPackageSent(recipientPubKey, recipientHub);
 		message.printTo(bufferForPackageSent.message);
 #ifdef DEBUG_PRINT
 		Serial.println(bufferForPackageSent.message);
@@ -197,7 +201,7 @@ bool sendWalletFullyApproved(const char recipientPubKey[45]){
 	}
 }
 
-bool sendXpubkeyTodevice(const char recipientPubKey[45]){
+bool sendXpubkeyTodevice(const char recipientPubKey[45], const char * recipientHub){
 
 	if (bufferForPackageSent.isFree){
 		const size_t bufferSize = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4);
@@ -212,11 +216,7 @@ bool sendXpubkeyTodevice(const char recipientPubKey[45]){
 		objBody["my_xpubkey"]= (const char*) byteduino_device.keys.extPubKey;
 		message["body"]= objBody;
 
-		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
-		strcpy(bufferForPackageSent.recipientHub,byteduino_device.hub);
-		bufferForPackageSent.isFree = false;
-		bufferForPackageSent.isRecipientKeyRequested = false;
+		loadBufferPackageSent(recipientPubKey, recipientHub);
 		message.printTo(bufferForPackageSent.message);
 #ifdef DEBUG_PRINT
 		Serial.println(bufferForPackageSent.message);

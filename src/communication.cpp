@@ -187,11 +187,11 @@ void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 */
 
-bool sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, const char * text){
+bool sendTxtMessage(const char recipientPubKey [45],const char * recipientHub, const char * text){
 
 	if (bufferForPackageSent.isFree){
-		if (strlen(deviceHub) < MAX_HUB_STRING_SIZE){
-			if (strlen(recipientPubkey) == 44){
+		if (strlen(recipientHub) < MAX_HUB_STRING_SIZE){
+			if (strlen(recipientPubKey) == 44){
 				if (strlen(text) < (SENT_PACKAGE_BUFFER_SIZE - 108)){
 					const size_t bufferSize = JSON_OBJECT_SIZE(4);
 					StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -201,11 +201,8 @@ bool sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, cons
 					message["subject"] = "text";
 
 					message["body"]= text;
-					bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-					strcpy(bufferForPackageSent.recipientPubkey,recipientPubkey);
-					strcpy(bufferForPackageSent.recipientHub, deviceHub);
-					bufferForPackageSent.isFree = false;
-					bufferForPackageSent.isRecipientKeyRequested = false;
+
+					loadBufferPackageSent(recipientPubKey, recipientHub);
 					message.printTo(bufferForPackageSent.message);
 #ifdef DEBUG_PRINT
 					Serial.println(bufferForPackageSent.message);
