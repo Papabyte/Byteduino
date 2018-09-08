@@ -60,7 +60,7 @@ void byteduino_init (){
 	Serial.println(getDeviceInfos());
 	
 	//start websocket
-	webSocketForHub.beginSSL("byteball.org", byteduino_device.port, "/bb-test"); //tbd: get url and path from config
+	webSocketForHub.beginSSL(getDomain(byteduino_device.hub), byteduino_device.port, getPath(byteduino_device.hub));
 	webSocketForHub.onEvent(webSocketEvent);
 	
 	//set up base timer

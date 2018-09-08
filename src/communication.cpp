@@ -70,6 +70,21 @@ void respondToHub(uint8_t *payload) {
 
 }
 
+String getDomain(const char * hub){
+	String returnedString = hub;
+	int slashIndex = returnedString.indexOf("/");
+	if (slashIndex > 0)
+		returnedString.remove(slashIndex);
+	return returnedString;
+}
+
+String getPath(const char * hub){
+	String returnedString = hub;
+	int slashIndex = returnedString.indexOf("/");
+	if (slashIndex > 0)
+		returnedString.remove(0, slashIndex);
+	return returnedString;
+}
 
 /*
 void connectSecondaryWebsocket(){

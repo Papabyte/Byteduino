@@ -22,4 +22,5 @@ void connectSecondaryWebsocket();
 bool isValidArrayFromHub(JsonArray& arr);
 bool sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, const char * text);
 void setCbTxtMessageReceived(cbMessageReceived cbToSet);
-
+String getDomain(const char * hub);
+String getPath(const char * hub);
