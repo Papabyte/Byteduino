@@ -55,9 +55,9 @@ void updateRandomPool(){
 	randomPoolTicker++;
 	if (randomPoolTicker == 1200){ //need to wait around 5 mega cycles to be sure random number generator is reliable
 		randomPoolTicker = 0;
-		uint32_t* randReg = (uint32_t*) 0x3FF20E44L; //read random number register
+		uint32_t* randReg = (uint32_t*) RANDOM_REGISTER; //read random number register
 		byte fromHardRandomGen = (byte) *randReg;
-		randomPool[cycle] = (ESP.getCycleCount() & 0xff) ^ fromHardRandomGen;
+		randomPool[cycle] = (GET_CYCLE_COUNT & 0xff) ^ fromHardRandomGen;
 		cycle++;
 		if (cycle > 86) {
 			cycle = 0;

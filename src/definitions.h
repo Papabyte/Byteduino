@@ -34,4 +34,7 @@
 //device specific
 #ifdef ESP8266
 #define UNIQUE_WEBSOCKET
+#define FEED_WATCHDOG ESP.wdtFeed()
+#define RANDOM_REGISTER 0x3FF20E44L
+#define GET_CYCLE_COUNT ESP.getCycleCount()
 #endif

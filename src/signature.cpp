@@ -37,7 +37,7 @@ void getB64SignatureForHash(char * sigb64 ,const uint8_t * privateKey, const uin
 	uint8_t signature[64];
 	do {
 		uECC_sign(privateKey, hash, length, signature, uECC_secp256k1());
-		ESP.wdtFeed();
+		FEED_WATCHDOG;
 	} while (signature[32] > 0x79);//hub would refuse a high-s signature
 	Base64.encode(sigb64, (char *) signature, 64);
 
