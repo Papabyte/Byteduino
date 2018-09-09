@@ -136,7 +136,7 @@ xpub6Chxqf8hRQoLRJFS8mhFCDv5yzUNC7rhhh36qqqt1WtAZcmCNhS5pPndqhx8RmgwFhGPa9FYq3iT
 Wss connected to: /bb-test
 Authenticated by hub
 ```
-To get verbose serial output, add `#define DEBUG_PRINT` to your sketch.
+To get verbose serial output, add `#define DEBUG_PRINT` to your byteduino.h.
 
 ##### Functions references
 Coming soon

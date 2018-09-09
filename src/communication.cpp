@@ -14,7 +14,7 @@ cbMessageReceived _cbMessageReceived;
 
 
 void setCbTxtMessageReceived(cbMessageReceived cbToSet){
-_cbMessageReceived = cbToSet;
+	_cbMessageReceived = cbToSet;
 }
 
 bool isValidArrayFromHub(JsonArray& arr){
@@ -238,66 +238,65 @@ void treatReceivedPackage(){
 		
 		DynamicJsonBuffer jb(700);
 		JsonObject& receivedPackage = jb.parseObject(bufferForPackageReceived.message);
-		if (!receivedPackage.success()) {
+		if (receivedPackage.success()) {
+
+			const char* subject = receivedPackage["subject"];
+
+			if (subject != nullptr) {
+
+				if (strcmp(subject,"pairing") == 0){
+					if (receivedPackage["body"].is<JsonObject>()){
+#ifdef DEBUG_PRINT
+						Serial.println(F("handlePairingRequest"));
+#endif
+						handlePairingRequest(receivedPackage);
+					}
+
+				} else if (strcmp(subject,"text") == 0){
+#ifdef DEBUG_PRINT
+					Serial.println(F("handle text"));
+#endif
+					const char * messageDecoded = receivedPackage["body"];
+					const char * senderHub = receivedPackage["device_hub"];
+					if (messageDecoded != nullptr && senderHub != nullptr) {
+						if(_cbMessageReceived){
+							_cbMessageReceived(bufferForPackageReceived.senderPubkey, senderHub, messageDecoded);
+						}
+					} else {
+#ifdef DEBUG_PRINT
+						Serial.println(F("body and device_hub must be char"));
+#endif
+					}
+
+				}
+#ifndef REMOVE_COSIGNING
+				
+				else if (strcmp(subject,"create_new_wallet") == 0){
+					if (receivedPackage["body"].is<JsonObject>()){
+	#ifdef DEBUG_PRINT
+						Serial.println(F("handle new wallet"));
+	#endif
+						handleNewWalletRequest(bufferForPackageReceived.senderPubkey,receivedPackage);
+					}
+
+				} else if (strcmp(subject,"sign") == 0){
+					if (receivedPackage["body"].is<JsonObject>()){
+	#ifdef DEBUG_PRINT
+						Serial.println(F("handle signature request"));
+	#endif
+						handleSignatureRequest(bufferForPackageReceived.senderPubkey,receivedPackage);
+					}
+
+				}
+#endif
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("no subject for received message"));
+#endif
+			}
+	} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("Deserialization failed"));
-#endif
-		bufferForPackageReceived.isFree = true;
-		return;
-		}
-
-		const char* subject = receivedPackage["subject"];
-
-		if (subject != nullptr) {
-
-			if (strcmp(subject,"pairing") == 0){
-				if (receivedPackage["body"].is<JsonObject>()){
-#ifdef DEBUG_PRINT
-					Serial.println(F("handlePairingRequest"));
-#endif
-					handlePairingRequest(receivedPackage);
-				}
-
-			} else if (strcmp(subject,"text") == 0){
-#ifdef DEBUG_PRINT
-				Serial.println(F("handle text"));
-#endif
-				const char * messageDecoded = receivedPackage["body"];
-				const char * senderHub = receivedPackage["device_hub"];
-				if (messageDecoded != nullptr && senderHub != nullptr) {
-					if(_cbMessageReceived){
-						_cbMessageReceived(bufferForPackageReceived.senderPubkey, senderHub, messageDecoded);
-					}
-				} else {
-#ifdef DEBUG_PRINT
-					Serial.println(F("body and device_hub must be char"));
-#endif
-				}
-
-			} else if (strcmp(subject,"create_new_wallet") == 0){
-				if (receivedPackage["body"].is<JsonObject>()){
-#ifdef DEBUG_PRINT
-					Serial.println(F("handle new wallet"));
-#endif
-					handleNewWalletRequest(bufferForPackageReceived.senderPubkey,receivedPackage);
-				}
-
-			} else if (strcmp(subject,"sign") == 0){
-				if (receivedPackage["body"].is<JsonObject>()){
-#ifdef DEBUG_PRINT
-					Serial.println(F("handle signature request"));
-#endif
-					handleSignatureRequest(bufferForPackageReceived.senderPubkey,receivedPackage);
-				}
-
-			}
-
-			bufferForPackageReceived.isFree = true;
-			return;
-
-		} else {
-#ifdef DEBUG_PRINT
-			Serial.println(F("no subject for received message"));
 #endif
 		}
 	bufferForPackageReceived.isFree = true;
@@ -352,9 +351,7 @@ void respondToRequestFromHub(JsonArray& arr) {
 #endif
 		}
 	return;
-	}
-
-	if (strcmp(command, "heartbeat") == 0) {
+	} else if (strcmp(command, "heartbeat") == 0) {
 		const char* tag = arr[1]["tag"];
 		if (tag != nullptr) {
 		//   sendHeartbeatResponse(tag);
@@ -369,7 +366,6 @@ void respondToRequestFromHub(JsonArray& arr) {
 #ifdef DEBUG_PRINT
 		Serial.println(F("Second array should contain a command"));
 #endif
-	return;
 	}
 
 }
@@ -391,7 +387,6 @@ void respondToJustSayingFromHub(JsonArray& arr) {
 				Serial.println(F("Second array should contain a body"));
 #endif
 			}
-			return;
 		} else if (strcmp(subject, "hub/push_project_number") == 0) {
 			byteduino_device.isAuthenticated = true;
 			Serial.println(F("Authenticated by hub"));
@@ -412,7 +407,6 @@ void respondToJustSayingFromHub(JsonArray& arr) {
 		Serial.println(F("Second array should contain a subject"));
 #endif
 	}
-		return;
 }
 
 

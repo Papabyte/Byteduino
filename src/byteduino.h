@@ -44,7 +44,7 @@
 #include "random_gen.h"
 
 #define DEBUG_PRINT
-
+//#define REMOVE_COSIGNING
 
 void byteduino_init ();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
