@@ -38,3 +38,10 @@
 	#define RANDOM_REGISTER 0x3FF20E44L
 	#define GET_CYCLE_COUNT ESP.getCycleCount()
 #endif
+
+//return codes
+#define SUCCESS 0
+#define TEXT_TOO_LONG 1
+#define WRONG_PUBKEY_SIZE 2
+#define HUB_URL_TOO_LONG 3
+#define BUFFER_NOT_FREE 4

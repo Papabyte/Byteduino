@@ -187,7 +187,7 @@ void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 */
 
-bool sendTxtMessage(const char recipientPubKey [45],const char * recipientHub, const char * text){
+int sendTxtMessage(const char recipientPubKey [45],const char * recipientHub, const char * text){
 
 	if (bufferForPackageSent.isFree){
 		if (strlen(recipientHub) < MAX_HUB_STRING_SIZE){
@@ -207,29 +207,32 @@ bool sendTxtMessage(const char recipientPubKey [45],const char * recipientHub, c
 #ifdef DEBUG_PRINT
 					Serial.println(bufferForPackageSent.message);
 #endif
-					return true;
+					return SUCCESS;
 				} else {
 #ifdef DEBUG_PRINT
 					Serial.println(F("text too long"));
 #endif
+					return TEXT_TOO_LONG;
 				}
 			} else {
 #ifdef DEBUG_PRINT
 				Serial.println(F("wrong pub key size"));
 #endif
+				return WRONG_PUBKEY_SIZE;
 			}
 		} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("hub url too long"));
 #endif
+			return HUB_URL_TOO_LONG;
 		}
 
 	} else {
 #ifdef DEBUG_PRINT
 			Serial.println(F("Buffer not free to send message"));
 #endif
+		return BUFFER_NOT_FREE;
 	}
-	return false;
 }
 
 void treatReceivedPackage(){
