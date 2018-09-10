@@ -313,6 +313,7 @@ void treatResponseFromHub(JsonArray& arr){
 		if (tag != nullptr) {
 				if (tag[9] == HEARTBEAT[1]){
 #ifdef DEBUG_PRINT
+					Serial.println(ESP.getFreeHeap());
 					Serial.println(F("Heartbeat acknowledged by hub"));
 #endif
 				} else if (tag[9] == UPDATE_MESSENGER_KEY[1]){

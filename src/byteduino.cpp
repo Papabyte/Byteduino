@@ -57,7 +57,7 @@ void byteduino_init (){
 	getDeviceAddress(byteduino_device.keys.publicKeyM1b64, byteduino_device.deviceAddress);
 	
 	//send device infos to serial
-	Serial.println(getDeviceInfos());
+	printDeviceInfos();
 	
 	//start websocket
 	webSocketForHub.beginSSL(getDomain(byteduino_device.hub), byteduino_device.port, getPath(byteduino_device.hub));
@@ -76,21 +76,33 @@ void byteduino_init (){
 	//secondaryWebSocket.onEvent(secondaryWebSocketEvent);
 }
 
-String getDeviceInfos(){
-	String returnedString = "Device address: ";
-	returnedString.concat(byteduino_device.deviceAddress);
-	returnedString.concat("\n");
-	returnedString.concat("Device name: ");
-	returnedString.concat(byteduino_device.deviceName);
-	returnedString.concat("\n");
-	returnedString.concat("Pairing code: ");
-	returnedString.concat(byteduino_device.keys.publicKeyM1b64);
-	returnedString.concat("@");
-	returnedString.concat(byteduino_device.hub);
-	returnedString.concat("#0000");
-	returnedString.concat("\nExtended Pub Key:\n");
-	returnedString.concat(byteduino_device.keys.extPubKey);
-	return returnedString;
+void printDeviceInfos(){
+	Serial.println("Device address: ");
+	Serial.println(byteduino_device.deviceAddress);
+	Serial.println("Device name: ");
+	Serial.println(byteduino_device.deviceName);
+	Serial.println("Pairing code: ");
+	Serial.println(byteduino_device.keys.publicKeyM1b64);
+	Serial.println("@");
+	Serial.println(byteduino_device.hub);
+	Serial.println("#0000");
+	Serial.println("Extended Pub Key:");
+	Serial.println(byteduino_device.keys.extPubKey);
+}
+
+
+void getDeviceInfosJson(char * json){
+	const size_t bufferSize = JSON_OBJECT_SIZE(4) +50 ;
+	StaticJsonBuffer<bufferSize> jsonBuffer;
+	JsonObject & mainObject = jsonBuffer.createObject();
+
+	mainObject["device_address"] = (const char *) byteduino_device.deviceAddress;
+	mainObject["device_hub"] = (const char *) byteduino_device.hub;
+	mainObject["device_pubkey"] =(const char *) byteduino_device.keys.publicKeyM1b64;
+	mainObject["extended_pubkey"] =(const char *) byteduino_device.keys.extPubKey;
+	char output[250];
+	mainObject.printTo(output);
+	strcpy(json,output);
 }
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
