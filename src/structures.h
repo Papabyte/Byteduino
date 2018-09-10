@@ -70,10 +70,11 @@ typedef struct waitingConfirmationRoom{
 	char signing_path[MAX_SIGNING_PATH_SIZE];
 	char address[33];
 	uint8_t hash[32];
+	char signedText[45];
 	char sigb64[89];
 	char JsonDigest[500];
 } waitingConfirmationRoom;
 
 typedef void (*cbMessageReceived)(const char* senderPubKey, const char* senderHub, const char* messageReceived);
-typedef void (*cbSignatureToConfirm)(const uint8_t hash[], const char* JsonDigest);
+typedef void (*cbSignatureToConfirm)(const char * signedTxt, const char* JsonDigest);
 

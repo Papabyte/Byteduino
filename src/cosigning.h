@@ -6,5 +6,6 @@
 void handleSignatureRequest(const char senderPubkey[45],JsonObject& package);
 void treatWaitingSignature();
 void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45], JsonObject& body);
-bool confirmSignature(const uint8_t hash[]);
+bool confirmSignature(const char * signedTxt);
 void setCbSignatureToConfirm(cbSignatureToConfirm cbToSet);
+void getOnGoingSignatureJson(char* json);

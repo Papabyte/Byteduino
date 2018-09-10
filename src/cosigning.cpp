@@ -25,10 +25,26 @@ void removeKeyIfExisting(const char * key, JsonObject& object){
 	
 }
 
-bool confirmSignature(const uint8_t hash[]){
+void getOnGoingSignatureJson(char* json){
+
+	const size_t bufferSize = JSON_OBJECT_SIZE(3);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
+	JsonObject & mainObject = jsonBuffer.createObject();
+	if (!waitingConfirmationSignature.isFree){
+		mainObject["signedText"] = (const char *) waitingConfirmationSignature.signedText;
+		mainObject["digest"] = (const char *) waitingConfirmationSignature.JsonDigest;
+		mainObject["isConfirmed"] = (const bool) waitingConfirmationSignature.isConfirmed;
+	}
+	char output[300];
+	mainObject.printTo(output);
+	strcpy(json,output);
+
+}
+
+bool confirmSignature(const char * signedTxt){
 	
-	for (int i=0;i<32;i++){
-		if (hash[i]!= waitingConfirmationSignature.hash[i]){
+	for (int i=0;i<45;i++){
+		if (signedTxt[i]!= waitingConfirmationSignature.signedText[i]){
 			return false;
 		}
 	}
@@ -49,9 +65,7 @@ void treatWaitingSignature(){
 			message["subject"] = "signature";
 
 			JsonObject & objBody = jsonBuffer.createObject();
-			char hashB64[45];
-			Base64.encode(hashB64,(char *) waitingConfirmationSignature.hash, 32);
-			objBody["signed_text"]= hashB64;
+			objBody["signed_text"]= waitingConfirmationSignature.signedText;
 			objBody["signature"] = (const char*) waitingConfirmationSignature.sigb64;
 			objBody["signing_path"] = (const char*) waitingConfirmationSignature.signing_path;
 			objBody["address"] = (const char*) waitingConfirmationSignature.address;
@@ -148,10 +162,11 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 					strcpy(waitingConfirmationSignature.signing_path, signing_path);
 					memcpy(waitingConfirmationSignature.address, address, 33);
 					strcpy(waitingConfirmationSignature.recipientHub, recipientHub);
+					Base64.encode(waitingConfirmationSignature.signedText,(char *)hash, 32);
 					waitingConfirmationSignature.isConfirmed = false;
 					waitingConfirmationSignature.isFree = false;
 					if (_cbSignatureToConfirm){
-						_cbSignatureToConfirm(waitingConfirmationSignature.hash, waitingConfirmationSignature.JsonDigest);
+						_cbSignatureToConfirm(waitingConfirmationSignature.signedText, waitingConfirmationSignature.JsonDigest);
 					}
 				} else {
 #ifdef DEBUG_PRINT

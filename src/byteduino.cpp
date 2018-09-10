@@ -92,7 +92,7 @@ void printDeviceInfos(){
 
 
 void getDeviceInfosJson(char * json){
-	const size_t bufferSize = JSON_OBJECT_SIZE(4) +50 ;
+	const size_t bufferSize = JSON_OBJECT_SIZE(4);
 	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonObject & mainObject = jsonBuffer.createObject();
 
@@ -100,7 +100,7 @@ void getDeviceInfosJson(char * json){
 	mainObject["device_hub"] = (const char *) byteduino_device.hub;
 	mainObject["device_pubkey"] =(const char *) byteduino_device.keys.publicKeyM1b64;
 	mainObject["extended_pubkey"] =(const char *) byteduino_device.keys.extPubKey;
-	char output[250];
+	char output[300];
 	mainObject.printTo(output);
 	strcpy(json,output);
 }

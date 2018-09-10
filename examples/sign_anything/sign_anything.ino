@@ -5,12 +5,12 @@
 ESP8266WiFiMulti WiFiMulti;
 
 
-void onSignatureRequest(const uint8_t hash[], const char* JsonDigest) {
+void onSignatureRequest(const char signedTxt[], const char* JsonDigest) {
 
-    Serial.println("Going to sign: ");
-    Serial.println(JsonDigest);
+  Serial.println("Going to sign: ");
+  Serial.println(JsonDigest);
 
-  if (!confirmSignature(hash)) {
+  if (!confirmSignature(signedTxt)) {
     Serial.println(F("Couldn't confirm this signature"));
   };
   //mind that parameters will be deleted after function ends, if you need to copy them then do it by value
