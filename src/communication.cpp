@@ -239,7 +239,7 @@ void treatReceivedPackage(){
 	
 	if (!bufferForPackageReceived.isFree){
 		
-		DynamicJsonBuffer jb(700);
+		DynamicJsonBuffer jb(JSON_BUFFER_SIZE_FOR_RECEIVED_PACKAGE);
 		JsonObject& receivedPackage = jb.parseObject(bufferForPackageReceived.message);
 		if (receivedPackage.success()) {
 			
