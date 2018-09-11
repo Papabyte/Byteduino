@@ -242,6 +242,12 @@ void treatReceivedPackage(){
 		DynamicJsonBuffer jb(700);
 		JsonObject& receivedPackage = jb.parseObject(bufferForPackageReceived.message);
 		if (receivedPackage.success()) {
+			
+			if (receivedPackage["encrypted_package"].is<JsonObject>()){
+				Serial.println(F("inner encrypted package"));
+				treatInnerPackage(receivedPackage["encrypted_package"]);
+				return;
+			}
 
 			const char* subject = receivedPackage["subject"];
 
@@ -397,8 +403,8 @@ void respondToJustSayingFromHub(JsonArray& arr) {
 			return;
 		} else if (strcmp(subject, "hub/message") == 0) {
 			if (arr[1]["body"].is<JsonObject>()) {
-				JsonObject& object = arr[1]["body"];
-				respondToMessage(object);
+				JsonObject& messageBody = arr[1]["body"];
+				treatReceivedMessage(messageBody);
 			} else {
 #ifdef DEBUG_PRINT
 				Serial.println(F("Second array should contain an object"));

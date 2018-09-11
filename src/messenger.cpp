@@ -209,17 +209,10 @@ void checkAndUpdateRecipientKey(JsonObject& objResponse){
 
 
 
-void decryptPackageAndPlaceItInBuffer(JsonObject& message){
+void decryptPackageAndPlaceItInBuffer(JsonObject& encryptedPackage, const char* senderPubkey){
 
-	if (strcmp(message["to"],byteduino_device.deviceAddress)!= 0){
-#ifdef DEBUG_PRINT
-		Serial.println(F("wrong recipient"));
-#endif
-		return;
-	}
-
-	const char * recipient_ephemeral_pubkey = message["encrypted_package"]["dh"]["recipient_ephemeral_pubkey"];
-	const char * sender_ephemeral_pubkey_b64 =  message["encrypted_package"]["dh"]["sender_ephemeral_pubkey"];
+	const char * recipient_ephemeral_pubkey = encryptedPackage["dh"]["recipient_ephemeral_pubkey"];
+	const char * sender_ephemeral_pubkey_b64 =  encryptedPackage["dh"]["sender_ephemeral_pubkey"];
 
 	uint8_t decompressedSenderPubKey[64];
 	decodeAndDecompressPubKey(sender_ephemeral_pubkey_b64, decompressedSenderPubKey);
@@ -249,25 +242,23 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& message){
 	}
 	
 	uint8_t hashedSecret[16];
-
 	getSHA256(hashedSecret ,(const char*)secret, 32,16);
 
 	GCM<AES128> gcm;
 
-	const char * authtagb64 = message["encrypted_package"]["authtag"];
+	const char * authtagb64 = encryptedPackage["authtag"];
 	uint8_t authTag[18];
 	Base64.decode(authTag, authtagb64, 25);
 
-	const char* plaintextB64 = message["encrypted_package"]["encrypted_message"];
+	const char* plaintextB64 = encryptedPackage["encrypted_message"];
 	int sizeB64 =   strlen(plaintextB64);
 	if (sizeB64 < RECEIVED_PACKAGE_BUFFER_SIZE*1.3){
 		Base64.decode(bufferForPackageReceived.message, plaintextB64,  sizeB64);
 		size_t bufferSize = Base64.decodedLength(plaintextB64, sizeB64);
 
-		const char* pubkey =  message["pubkey"];
-		memcpy(bufferForPackageReceived.senderPubkey, pubkey,45);
+		memcpy(bufferForPackageReceived.senderPubkey, senderPubkey,45);
 		gcm.setKey(hashedSecret, 16);
-		const char * ivb64 = message["encrypted_package"]["iv"];
+		const char * ivb64 = encryptedPackage["iv"];
 		uint8_t iv [12];
 		Base64.decode(iv, ivb64, 17);
 		gcm.setIV(iv, 12);
@@ -295,6 +286,15 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& message){
 }
 
 
+void treatInnerPackage(JsonObject& encryptedPackage){
+	if (checkEncryptedPackageStructure(encryptedPackage)){
+#ifdef DEBUG_PRINT
+		Serial.println(F("Going to decrypt inner package"));
+#endif
+		decryptPackageAndPlaceItInBuffer(encryptedPackage, bufferForPackageReceived.senderPubkey);
+	}
+}
+
 void treatReceivedMessage(JsonObject& messageBody){
 #ifdef DEBUG_PRINT
 	Serial.println(F("treatReceivedMessage"));
@@ -308,7 +308,7 @@ void treatReceivedMessage(JsonObject& messageBody){
 			return;
 		}
 		Serial.println(F("ready to decode message"));
-		
+
 		JsonObject& message = messageBody["message"];
 		
 		if (checkMessageStructure(message)){
@@ -320,7 +320,16 @@ void treatReceivedMessage(JsonObject& messageBody){
 			Serial.println(hashB64);
 #endif
 			if (strcmp(hashB64,messageBody["message_hash"]) == 0){
-				decryptPackageAndPlaceItInBuffer(message);
+				if (strcmp(message["to"],byteduino_device.deviceAddress) == 0){
+#ifdef DEBUG_PRINT
+			Serial.println(F("Going to decrypt package"));
+#endif
+					decryptPackageAndPlaceItInBuffer(message["encrypted_package"], message["pubkey"]);
+				} else {
+#ifdef DEBUG_PRINT
+		Serial.println(F("wrong recipient"));
+#endif
+				}
 			} else { 
 #ifdef DEBUG_PRINT
 				Serial.println(F("Wrong message hash"));
@@ -328,57 +337,61 @@ void treatReceivedMessage(JsonObject& messageBody){
 			}
 		} else {
 #ifdef DEBUG_PRINT
-	Serial.println(F("Wrong message sctructure"));
+	Serial.println(F("Wrong message structure"));
 #endif
 		}
 
 	}
 }
 
+bool checkEncryptedPackageStructure(JsonObject& encryptedPackage){
+
+	if (encryptedPackage["encrypted_message"].is<char*>()) {	
+		if (encryptedPackage["iv"].is<char*>()) {
+			if (encryptedPackage["authtag"].is<char*>()) {
+				if (encryptedPackage["dh"].is<JsonObject>()){
+					if (encryptedPackage["dh"]["sender_ephemeral_pubkey"].is<char*>()) {
+						if (encryptedPackage["dh"]["recipient_ephemeral_pubkey"].is<char*>()) {
+							return true;
+						} else {
+#ifdef DEBUG_PRINT
+							Serial.println(F("encrypted_package should contain recipient_ephemeral_pubkey"));
+#endif
+						}
+					} else {
+#ifdef DEBUG_PRINT
+						Serial.println(F("encrypted_package should contain sender_ephemeral_pubkey"));
+#endif
+					}
+				} else {
+#ifdef DEBUG_PRINT
+					Serial.println(F("encrypted_package should contain dh object"));
+#endif
+				}
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("encrypted_package should contain authtag string"));
+#endif
+			}
+		} else {
+#ifdef DEBUG_PRINT
+			Serial.println(F("encrypted_package should contain iv string"));
+#endif
+		}
+	} else {
+#ifdef DEBUG_PRINT
+		Serial.println(F("encrypted_package should contain encrypted_message string"));
+#endif
+	}
+return false;
+}
 
 bool checkMessageStructure(JsonObject& message){
 	if (message["encrypted_package"].is<JsonObject>()) {
 		if (message["to"].is<char*>()) {
 			if (message["pubkey"].is<char*>()) {	
 				if (message["signature"].is<char*>()) {
-					if (message["encrypted_package"]["encrypted_message"].is<char*>()) {	
-						if (message["encrypted_package"]["iv"].is<char*>()) {
-							if (message["encrypted_package"]["authtag"].is<char*>()) {
-								if (message["encrypted_package"]["dh"].is<JsonObject>()){
-									if (message["encrypted_package"]["dh"]["sender_ephemeral_pubkey"].is<char*>()) {
-										if (message["encrypted_package"]["dh"]["recipient_ephemeral_pubkey"].is<char*>()) {
-											return true;
-										} else {
-#ifdef DEBUG_PRINT
-											Serial.println(F("encrypted_package should contain recipient_ephemeral_pubkey"));
-#endif
-										}
-									} else {
-#ifdef DEBUG_PRINT
-										Serial.println(F("encrypted_package should contain sender_ephemeral_pubkey"));
-#endif
-									}
-								} else {
-#ifdef DEBUG_PRINT
-									Serial.println(F("encrypted_package should contain dh object"));
-#endif
-								}
-							} else {
-#ifdef DEBUG_PRINT
-								Serial.println(F("encrypted_package should contain authtag string"));
-#endif
-							}
-						} else {
-#ifdef DEBUG_PRINT
-							Serial.println(F("encrypted_package should contain iv string"));
-#endif
-						}
-					}
-					else {
-#ifdef DEBUG_PRINT
-						Serial.println(F("encrypted_package should contain encrypted_message string"));
-#endif
-					}
+					return checkEncryptedPackageStructure(message["encrypted_package"]);
 				} else {
 #ifdef DEBUG_PRINT
 				Serial.println(F("message body should contain signature string "));
