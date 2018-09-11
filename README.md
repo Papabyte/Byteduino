@@ -19,10 +19,12 @@ Independently from any posting in DAG, this layer is available on your Byteduino
 ##### Transaction cosigning
 On such small device, it will never be possible to implement a full-featured Byteball client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosign.
 after having checked only critical points. This way we ensure that the transaction has been ordered by the Byteduino device although the distant server could have been compromized.
-Beside sending payments, this technic can be used to post data into the immutable public ledger while proving they existed at time they were posted.
+The [hardware-cosigner](https://github.com/Papabyte/Hardware-cosigner) used as second factor authentification for a GUI wallet is a practical application of that.
 
 ##### Transaction broadcasting
 coming next!
+Beside sending payments, this function will allow to post data into the immutable public ledger while proving they existed at time they were posted.
+
 
 #### Features
 
@@ -35,7 +37,7 @@ coming next!
 #### Supported hardware
 
 - [ ] ESP8266 [Arduino for ESP8266](https://github.com/esp8266/Arduino/)
-- Limitations: due to the low amount of RAM available for program (around 40KB), this device cannot treat large messages. It cannot handle units containing more than 30 inputs/outputs and it must use the same hub as all paired devices and cosigners.
+- Limitations: due to the low amount of RAM available for program (around 40KB), this device cannot treat very large messages. It cannot handle units containing more than 50 to 100 inputs/outputs and it must use the same hub as all paired devices and cosigners.
 - Recommended board: Wifi WeMos D1 Mini Pro (~$5 retail price), including 16MB flash and USB-to-serial converter.
 
 - [ ] ESP32 [Arduino for ESP32](https://github.com/espressif/arduino-esp32)
@@ -50,7 +52,6 @@ Some external libraries are required. You can add them to your Arduino IDE throu
 
  - **ArduinoJson** by Benoit Blanchon version 5.13.2 (not compatible with version 6!)
  - **micro-ecc** by Kenneth MacKay version 1.0.0
- - **WebSockets** by Markus Sattler version 2.1.0
 
 Other third party code that needed to be tweaked is included in the project under the /libs folder.
 

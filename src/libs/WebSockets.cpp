@@ -378,12 +378,12 @@ void WebSockets::handleWebsocketCb(WSclient_t * client) {
     DEBUG_WEBSOCKETS("[WS][%d][handleWebsocket] ------- read massage frame -------\n", client->num);
     DEBUG_WEBSOCKETS("[WS][%d][handleWebsocket] fin: %u rsv1: %u rsv2: %u rsv3 %u  opCode: %u\n", client->num, header->fin, header->rsv1, header->rsv2, header->rsv3, header->opCode);
     DEBUG_WEBSOCKETS("[WS][%d][handleWebsocket] mask: %u payloadLen: %u\n", client->num, header->mask, header->payloadLen);
-/*
+
     if(header->payloadLen > WEBSOCKETS_MAX_DATA_SIZE) {
         DEBUG_WEBSOCKETS("[WS][%d][handleWebsocket] payload too big! (%u)\n", client->num, header->payloadLen);
         clientDisconnect(client, 1009);
         return;
-    }*/
+    }
 
     if(header->mask) {
         headerLen += 4;
