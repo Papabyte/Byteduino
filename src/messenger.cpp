@@ -9,6 +9,37 @@ extern messengerKeys myMessengerKeys;
 extern bufferPackageReceived bufferForPackageReceived;
 extern bufferPackageSent bufferForPackageSent;
 
+void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,char * ivb64, char * authTagB64){
+
+	uint8_t recipientDecompressedPubkey[64];
+	decodeAndDecompressPubKey(recipientTempMessengerkey,recipientDecompressedPubkey);
+
+	uint8_t secret[32];
+	uECC_shared_secret(recipientDecompressedPubkey, myMessengerKeys.privateKey, secret, uECC_secp256k1());
+
+	uint8_t hashedSecret[16];
+	getSHA256(hashedSecret, (const char*)secret, 32, 16);
+	GCM<AES128> gcm;
+
+	uint8_t authTag[16];
+
+	gcm.setKey(hashedSecret, 16);
+	uint8_t iv [12];
+	do{
+	}
+	while (!getRandomNumbersForVector(iv, 12));
+
+	Base64.encode(ivb64, (char *)iv, 12);
+	gcm.setIV(iv, 12);
+
+	size_t packageMessageLength = strlen(bufferForPackageSent.message);
+	gcm.encrypt((uint8_t *)messageB64, (uint8_t *)bufferForPackageSent.message, packageMessageLength); //unlike for decryption, encryption doesn't work well when usng same pointer as input and ouput
+	memcpy(bufferForPackageSent.message, messageB64, packageMessageLength);
+	gcm.computeTag(authTag,16);
+	Base64.encode(authTagB64, (char *)authTag, 16);
+	Base64.encode(messageB64, bufferForPackageSent.message, packageMessageLength);
+}
+
 void encryptAndSendPackage(){
 
 #ifdef UNIQUE_WEBSOCKET
@@ -20,44 +51,13 @@ if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
 	return;
 }
 #endif
-	
 	const char * recipientTempMessengerkey = bufferForPackageSent.recipientTempMessengerkey;  
-	
-	uint8_t recipientDecompressedPubkey[64];
-	decodeAndDecompressPubKey(recipientTempMessengerkey,recipientDecompressedPubkey);
-
-	uint8_t secret[32];
-
-	uECC_shared_secret(recipientDecompressedPubkey, myMessengerKeys.privateKey, secret, uECC_secp256k1());
-
-	uint8_t hashedSecret[16];
-	getSHA256(hashedSecret, (const char*)secret, 32, 16);
-	
-	GCM<AES128> gcm;
-
-	uint8_t authTag[16];
-
-	gcm.setKey(hashedSecret, 16);
-	uint8_t iv [12];
-	do{
-	}
-	while (!getRandomNumbersForVector(iv, 12));
-
-	char ivb64 [17];
-	Base64.encode(ivb64, (char *)iv, 12);
-
-	gcm.setIV(iv, 12);
 
 	char messageB64[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100];
-	size_t packageMessageLength = strlen(bufferForPackageSent.message);
-	gcm.encrypt((uint8_t *)messageB64, (uint8_t *)bufferForPackageSent.message, packageMessageLength); //unlike for decryption, encryption doesn't work well when usng same pointer as input and ouput
-	memcpy(bufferForPackageSent.message, messageB64, packageMessageLength);
-	gcm.computeTag(authTag,16);
+	char ivb64 [17];
 	char authTagB64 [25];
-	Base64.encode(authTagB64, (char *)authTag, 16);
-
-	Base64.encode(messageB64, bufferForPackageSent.message, packageMessageLength);
-
+	encryptPackage(recipientTempMessengerkey, messageB64, ivb64, authTagB64);
+	
 	const size_t bufferSize = JSON_ARRAY_SIZE(2) + 2*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(4);
 	DynamicJsonBuffer jsonBuffer(bufferSize);
 	JsonArray & mainArray = jsonBuffer.createArray();
@@ -95,7 +95,8 @@ if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
 
 	objRequest["params"] = objParams;
 	mainArray.add(objRequest);
-	char output[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100 + 520];
+
+	String output;
 	mainArray.printTo(output);
 #ifdef DEBUG_PRINT
 	Serial.println(output);
@@ -294,9 +295,9 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& message){
 }
 
 
-void respondToMessage(JsonObject& messageBody){
+void treatReceivedMessage(JsonObject& messageBody){
 #ifdef DEBUG_PRINT
-	Serial.println(F("respondToMessage"));
+	Serial.println(F("treatReceivedMessage"));
 #endif
 
 	if (checkMessageBodyStructure(messageBody)){

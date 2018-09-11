@@ -16,7 +16,7 @@
 
 
 
-void respondToMessage(JsonObject& messageBody);
+void treatReceivedMessage(JsonObject& messageBody);
 bool checkMessageBodyStructure(JsonObject& messageBody);
 bool checkMessageStructure(JsonObject& message);
 void deleteMessageFromHub(const char* messageHash);
@@ -24,5 +24,6 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& message);
 void getMessageHashB64(char * hashB64, JsonObject& message);
 void requestRecipientMessengerTempKey();
 void checkAndUpdateRecipientKey(JsonObject& objResponse);
+void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,char * ivb64, char * authTagB64);
 void encryptAndSendPackage();
 void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub);
