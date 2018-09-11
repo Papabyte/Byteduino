@@ -51,26 +51,9 @@ void respondToHub(uint8_t *payload) {
 	JsonArray& arr = jb.parseArray(payload);
 	if (!arr.success()) {
 		
-		char toBeScanned[200];
 #ifdef DEBUG_PRINT
-	Serial.println(F("Deserialization failed"));
-		int j=0;
-		for (int i = 0; i < 200; i++){
-			if (payload[i]!=0){
-				toBeScanned[j] = payload[i];
-				j++;
-			}
-		}
+		Serial.println(F("Deserialization failed"));
 #endif
-		Serial.println(toBeScanned);
-	char * messageHashPointer =strstr ( toBeScanned, "message_hash");
-		if (messageHashPointer != nullptr){
-			Serial.println(F("Message hash found"));
-			messageHashPointer[56]=0x00;
-			deleteMessageFromHub(messageHashPointer+12);
-			
-		}
-		
 	return;
 	}
 
