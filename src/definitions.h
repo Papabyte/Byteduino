@@ -6,7 +6,7 @@
 //string sizes
 #define TAG_LENGTH 10
 #define MAX_SIGNING_PATH_SIZE 20
-#define MAX_HUB_STRING_SIZE 25
+#define MAX_HUB_STRING_SIZE 30
 #define MAX_DEVICE_NAME_STRING_SIZE 25
 #define MAX_PAIRING_SECRET_STRING_SIZE 25
 
@@ -28,8 +28,12 @@
 #define RECEIVED false
 #define SENT_PACKAGE_BUFFER_SIZE 1000
 #define JSON_BUFFER_SIZE_FOR_RECEIVED_PACKAGE 7500
+
 //cosigners
 #define MAX_COSIGNERS 6
+
+//timeouts (10ms base)
+#define REQUEST_KEY_TIME_OUT 400
 
 //device specific
 #ifdef ESP8266

@@ -45,6 +45,7 @@ typedef struct bufferPackageSent{
 	bool isRecipientTempMessengerKeyKnown = false;
 	bool isFree = true;
 	bool isRecipientKeyRequested = false;
+	int timeOut = 0;
 } bufferPackageSent;
 
 typedef struct queueXpubkeyTobeSent{

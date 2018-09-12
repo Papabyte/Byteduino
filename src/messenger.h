@@ -29,3 +29,4 @@ void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,ch
 void encryptAndSendPackage();
 void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub);
 void treatInnerPackage(JsonObject&  encryptedPackage);
+void managePackageSentTimeOut();

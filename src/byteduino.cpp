@@ -130,19 +130,19 @@ void byteduino_loop(){
 	yield();
 	//secondaryWebSocket.loop();
 	
-	if (byteduino_device.isInitialized){
+	if (byteduino_device.isConnected){
 		treatReceivedPackage();
 		treatNewWalletCreation();
 		treatWaitingSignature();
-	}
-	
-	if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested){
-		requestRecipientMessengerTempKey();
-	}
-	
-	if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
-		encryptAndSendPackage();
-		yield();
+
+		if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested){
+			requestRecipientMessengerTempKey();
+		}
+
+		if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
+			encryptAndSendPackage();
+			yield(); //we let the wifi stack work since AES encryption may have been long
+		}
 	}
 	
 	if (baseTickOccured == true) {
@@ -153,6 +153,8 @@ void byteduino_loop(){
 				job2Seconds = 0;
 		}
 		baseTickOccured = false;
+		
+		managePackageSentTimeOut();
 	}
 	
 	updateRandomPool();

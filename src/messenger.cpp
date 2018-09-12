@@ -9,6 +9,20 @@ extern messengerKeys myMessengerKeys;
 extern bufferPackageReceived bufferForPackageReceived;
 extern bufferPackageSent bufferForPackageSent;
 
+
+void managePackageSentTimeOut(){
+	if (bufferForPackageSent.timeOut > 0){
+		bufferForPackageSent.timeOut--;
+	}
+
+	if (bufferForPackageSent.timeOut == 0 && !bufferForPackageSent.isFree){
+		bufferForPackageSent.isFree = true;
+#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient key was never received"));
+#endif 
+	}
+};
+
 void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,char * ivb64, char * authTagB64){
 
 	uint8_t recipientDecompressedPubkey[64];
@@ -110,6 +124,7 @@ if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
 void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub){
 		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
 		strcpy(bufferForPackageSent.recipientHub,recipientHub);
+		bufferForPackageSent.timeOut = REQUEST_KEY_TIME_OUT;
 		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
 		bufferForPackageSent.isFree = false;
 		bufferForPackageSent.isRecipientKeyRequested = false;
@@ -173,6 +188,10 @@ void checkAndUpdateRecipientKey(JsonObject& objResponse){
 					if (strcmp(pubkeyB64, bufferForPackageSent.recipientPubkey)==0){
 						 memcpy(bufferForPackageSent.recipientTempMessengerkey,temp_pubkeyB64,45);
 						 bufferForPackageSent.isRecipientTempMessengerKeyKnown = true; 
+					} else {
+#ifdef DEBUG_PRINT
+					Serial.println(F("wrong temp pub key received"));
+#endif 
 					}
 					
 				 } else{
