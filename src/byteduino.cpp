@@ -143,8 +143,10 @@ void byteduino_loop(){
 			encryptAndSendPackage();
 			yield(); //we let the wifi stack work since AES encryption may have been long
 		}
+		
+		if (bufferForPackageReceived.hasUnredMessage && bufferForPackageReceived.isFree && !bufferForPackageReceived.isRequestingNewMessage)
+			refreshMessagesFromHub();
 	}
-	
 	if (baseTickOccured == true) {
 		job2Seconds++;
 		if (job2Seconds == 200){
@@ -152,8 +154,8 @@ void byteduino_loop(){
 				sendHeartbeat();
 				job2Seconds = 0;
 		}
-		baseTickOccured = false;
 		
+		baseTickOccured = false;
 		managePackageSentTimeOut();
 	}
 	

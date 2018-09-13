@@ -62,7 +62,7 @@ void respondToHub(uint8_t *payload) {
 	}
 
 	if (strcmp(arr[0], "justsaying") == 0) {
-		respondToJustSayingFromHub(arr);
+		respondToJustSayingFromHub(arr[1]);
 	} else if (strcmp(arr[0], "request") == 0) {
 		respondToRequestFromHub(arr);
 	} else if (strcmp(arr[0], "response") == 0) {
@@ -382,20 +382,20 @@ void respondToRequestFromHub(JsonArray& arr) {
 }
 
 
+//Received: ["justsaying",{"subject":"hub/message_box_status","body":"empty"}]
+void respondToJustSayingFromHub(JsonObject& justSayingObject) {
 
-void respondToJustSayingFromHub(JsonArray& arr) {
-
-	const char* subject = arr[1]["subject"];
+	const char* subject = justSayingObject["subject"];
 
 	if (subject != nullptr) {
 
 		if (strcmp(subject, "hub/challenge") == 0) {
-			const char* body = arr[1]["body"];
+			const char* body = justSayingObject["body"];
 			if (body != nullptr) {
 				respondToHubChallenge(body);
 			} else {
 #ifdef DEBUG_PRINT
-				Serial.println(F("Second array should contain a body"));
+				Serial.println(F("justSayingObject should contain a body"));
 #endif
 			}
 		} else if (strcmp(subject, "hub/push_project_number") == 0) {
@@ -403,16 +403,31 @@ void respondToJustSayingFromHub(JsonArray& arr) {
 			Serial.println(F("Authenticated by hub"));
 			return;
 		} else if (strcmp(subject, "hub/message") == 0) {
-			if (arr[1]["body"].is<JsonObject>()) {
-				JsonObject& messageBody = arr[1]["body"];
+			if (justSayingObject["body"].is<JsonObject>()) {
+				JsonObject& messageBody = justSayingObject["body"];
 				treatReceivedMessage(messageBody);
+			}
+		} else if (strcmp(subject, "hub/message_box_status") == 0) {
+			bufferForPackageReceived.isRequestingNewMessage = false;
+			const char* body = justSayingObject["body"];
+			if (body != nullptr) {
+				if (strcmp(body, "empty") != 0){
+					bufferForPackageReceived.hasUnredMessage = true;
+#ifdef DEBUG_PRINT
+					Serial.println(F("Message box not empty"));
+#endif
+				} else{
+					bufferForPackageReceived.hasUnredMessage = false;
+#ifdef DEBUG_PRINT
+					Serial.println(F("Empty message box"));
+#endif
+				}
 			} else {
 #ifdef DEBUG_PRINT
-				Serial.println(F("Second array should contain an object"));
+				Serial.println(F("justSayingObject should contain a body"));
 #endif
 			}
-		}
-
+		} 
 	} else {
 #ifdef DEBUG_PRINT
 		Serial.println(F("Second array should contain a subject"));

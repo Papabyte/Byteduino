@@ -324,6 +324,10 @@ void treatReceivedMessage(JsonObject& messageBody){
 		if (bufferForPackageReceived.isFree){ //we delete message from hub if we have free buffer to treat it
 			deleteMessageFromHub(messageBody["message_hash"]);
 		} else {
+			bufferForPackageReceived.hasUnredMessage = true;
+#ifdef DEBUG_PRINT
+			Serial.println(F("buffer not free to treat received message"));
+#endif
 			return;
 		}
 		Serial.println(F("ready to decode message"));
@@ -477,4 +481,24 @@ void deleteMessageFromHub(const char* messageHash) {
 
 }
 
+void refreshMessagesFromHub() {
+	char output[100];
+	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
+	JsonArray & mainArray = jsonBuffer.createArray();
+
+	mainArray.add("justsaying");
+	JsonObject & objJustSaying = jsonBuffer.createObject();
+	JsonObject & objBody = jsonBuffer.createObject();
+
+	objJustSaying["subject"] = "hub/refresh";
+
+	mainArray.add(objJustSaying);
+	mainArray.printTo(output);
+#ifdef DEBUG_PRINT
+	Serial.println(output);
+#endif
+	bufferForPackageReceived.isRequestingNewMessage = true;
+	webSocketForHub.sendTXT(output);
+}
 

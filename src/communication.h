@@ -9,7 +9,7 @@
 
 void respondToHub(uint8_t *payload);
 void respondToRequestFromHub(JsonArray& arr);
-void respondToJustSayingFromHub(JsonArray& arr);
+void respondToJustSayingFromHub(JsonObject& justSayingObject);
 
 void sendErrorResponse(const char* tag, const char* error);
 void sendHeartbeat();

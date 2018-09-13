@@ -34,6 +34,8 @@ typedef struct bufferPackageReceived{
 	bool isFree = true;
 	uint8_t message[RECEIVED_PACKAGE_BUFFER_SIZE];
 	char senderPubkey[45];
+	bool hasUnredMessage = false;
+	bool isRequestingNewMessage = false;
 } bufferPackageReceived;
 
 
