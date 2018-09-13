@@ -25,6 +25,26 @@ void readWalletsJson(char * json){
 	
 }
 
+String getWalletsJsonString(){
+	const char firstChar = EEPROM.read(WALLETS_CREATED);
+	char lastCharRead;
+	String returnedString;
+
+	if (firstChar == 0x7B){
+		int i = -1; 
+		do {
+			i++;
+			lastCharRead = EEPROM.read(WALLETS_CREATED+i);
+			returnedString += lastCharRead;
+		}
+		while (lastCharRead != 0x00 && i < (WALLETS_CREATED_FLASH_SIZE));
+	}else{
+		returnedString += 0x7B;
+		returnedString += 0x7D;
+	}
+	return returnedString;
+}
+
 void saveWalletDefinitionInFlash(const char* wallet,const char* wallet_name, JsonArray& wallet_definition_template){
 	char output[WALLETS_CREATED_FLASH_SIZE];
 	char input[WALLETS_CREATED_FLASH_SIZE];

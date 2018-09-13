@@ -25,7 +25,7 @@ void removeKeyIfExisting(const char * key, JsonObject& object){
 	
 }
 
-void getOnGoingSignatureJson(char* json){
+String getOnGoingSignatureJsonString(){
 
 	const size_t bufferSize = JSON_OBJECT_SIZE(3);
 	StaticJsonBuffer<bufferSize> jsonBuffer;
@@ -35,10 +35,9 @@ void getOnGoingSignatureJson(char* json){
 		mainObject["digest"] = (const char *) waitingConfirmationSignature.JsonDigest;
 		mainObject["isConfirmed"] = (const bool) waitingConfirmationSignature.isConfirmed;
 	}
-	char output[300];
-	mainObject.printTo(output);
-	strcpy(json,output);
-
+	String returnedString;
+	mainObject.printTo(returnedString);
+	return returnedString;
 }
 
 bool confirmSignature(const char * signedTxt){

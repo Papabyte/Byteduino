@@ -25,6 +25,26 @@ void readPairedDevicesJson(char * json){
 	
 }
 
+String getDevicesJsonString(){
+	const char firstChar = EEPROM.read(PAIRED_DEVICES);
+	char lastCharRead;
+	String returnedString;
+
+	if (firstChar == 0x7B){
+		int i = -1; 
+		do {
+			i++;
+			lastCharRead = EEPROM.read(PAIRED_DEVICES+i);
+			returnedString += lastCharRead;
+		}
+		while (lastCharRead != 0x00 && i < (PAIRED_DEVICES_FLASH_SIZE));
+
+	}else{
+		returnedString += 0x7B;
+		returnedString += 0x7D;
+	}
+	return returnedString;
+}
 
 void savePeerInFlash(char peerPubkey[45],const char * peerHub, const char * peerName){
 	char output[PAIRED_DEVICES_FLASH_SIZE];

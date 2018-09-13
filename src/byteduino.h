@@ -51,8 +51,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 
 void byteduino_loop();
 void timerCallback(void * pArg);
-void getDeviceInfosJson(char * json);
-
+String getDeviceInfosJsonString();
 void setHub(const char * hub);
 void setDeviceName(const char * deviceName);
 void setExtPubKey(const char * extPubKey);

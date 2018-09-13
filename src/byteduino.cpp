@@ -91,7 +91,7 @@ void printDeviceInfos(){
 }
 
 
-void getDeviceInfosJson(char * json){
+String getDeviceInfosJsonString(){
 	const size_t bufferSize = JSON_OBJECT_SIZE(4);
 	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonObject & mainObject = jsonBuffer.createObject();
@@ -100,9 +100,9 @@ void getDeviceInfosJson(char * json){
 	mainObject["device_hub"] = (const char *) byteduino_device.hub;
 	mainObject["device_pubkey"] =(const char *) byteduino_device.keys.publicKeyM1b64;
 	mainObject["extended_pubkey"] =(const char *) byteduino_device.keys.extPubKey;
-	char output[300];
-	mainObject.printTo(output);
-	strcpy(json,output);
+	String returnedString;
+	mainObject.printTo(returnedString);
+	return returnedString;
 }
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {

@@ -5,6 +5,7 @@
 #include "byteduino.h"
 
 void readWalletsJson(char * json);
+String getWalletsJsonString();
 void saveWalletDefinitionInFlash(const char* wallet,const char* wallet_name, JsonArray& wallet_definition_template);
 void handleNewWalletRequest(char initiatiorPubKey [45], JsonObject& package);
 void treatNewWalletCreation();
