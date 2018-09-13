@@ -41,6 +41,8 @@
 	#define FEED_WATCHDOG ESP.wdtFeed()
 	#define RANDOM_REGISTER 0x3FF20E44L
 	#define GET_CYCLE_COUNT ESP.getCycleCount()
+	#define MAX_MESSAGE_LENGTH 9000
+	#define MAX_MESSAGE_COUNT 1
 #endif
 
 //return codes
