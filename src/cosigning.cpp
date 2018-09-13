@@ -41,14 +41,22 @@ String getOnGoingSignatureJsonString(){
 }
 
 bool confirmSignature(const char * signedTxt){
-	
 	for (int i=0;i<45;i++){
 		if (signedTxt[i]!= waitingConfirmationSignature.signedText[i]){
 			return false;
 		}
 	}
-	
 	waitingConfirmationSignature.isConfirmed = true;
+	return true;
+}
+
+bool denySignature(const char * signedTxt){
+	for (int i=0;i<45;i++){
+		if (signedTxt[i]!= waitingConfirmationSignature.signedText[i]){
+			return false;
+		}
+	}
+	waitingConfirmationSignature.isFree = true;
 	return true;
 }
 
