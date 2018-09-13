@@ -35,7 +35,8 @@ String getWalletsJsonString(){
 		do {
 			i++;
 			lastCharRead = EEPROM.read(WALLETS_CREATED+i);
-			returnedString += lastCharRead;
+			if (lastCharRead!= 0x00)
+				returnedString += lastCharRead;
 		}
 		while (lastCharRead != 0x00 && i < (WALLETS_CREATED_FLASH_SIZE));
 	}else{

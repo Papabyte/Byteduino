@@ -35,7 +35,8 @@ String getDevicesJsonString(){
 		do {
 			i++;
 			lastCharRead = EEPROM.read(PAIRED_DEVICES+i);
-			returnedString += lastCharRead;
+			if (lastCharRead!= 0x00)
+				returnedString += lastCharRead;
 		}
 		while (lastCharRead != 0x00 && i < (PAIRED_DEVICES_FLASH_SIZE));
 
