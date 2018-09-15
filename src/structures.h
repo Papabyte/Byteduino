@@ -68,6 +68,7 @@ typedef struct walletCreation{
 typedef struct waitingConfirmationRoom{
 	bool isFree = true;
 	bool isConfirmed = false;
+	bool isRefused = false;
 	char recipientPubKey[45];
 	char recipientHub[MAX_HUB_STRING_SIZE];
 	char signing_path[MAX_SIGNING_PATH_SIZE];

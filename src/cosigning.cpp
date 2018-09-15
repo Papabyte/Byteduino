@@ -34,13 +34,14 @@ String getOnGoingSignatureJsonString(){
 		mainObject["signedText"] = (const char *) waitingConfirmationSignature.signedText;
 		mainObject["digest"] = (const char *) waitingConfirmationSignature.JsonDigest;
 		mainObject["isConfirmed"] = (const bool) waitingConfirmationSignature.isConfirmed;
+		mainObject["isRefused"] = (const bool) waitingConfirmationSignature.isRefused;
 	}
 	String returnedString;
 	mainObject.printTo(returnedString);
 	return returnedString;
 }
 
-bool confirmSignature(const char * signedTxt){
+bool acceptToSign(const char * signedTxt){
 	for (int i=0;i<45;i++){
 		if (signedTxt[i]!= waitingConfirmationSignature.signedText[i]){
 			return false;
@@ -50,18 +51,18 @@ bool confirmSignature(const char * signedTxt){
 	return true;
 }
 
-bool denySignature(const char * signedTxt){
+bool refuseTosign(const char * signedTxt){
 	for (int i=0;i<45;i++){
 		if (signedTxt[i]!= waitingConfirmationSignature.signedText[i]){
 			return false;
 		}
 	}
-	waitingConfirmationSignature.isFree = true;
+	waitingConfirmationSignature.isRefused = true;
 	return true;
 }
 
 void treatWaitingSignature(){
-	if (!waitingConfirmationSignature.isFree && waitingConfirmationSignature.isConfirmed){
+	if (!waitingConfirmationSignature.isFree && (waitingConfirmationSignature.isConfirmed || waitingConfirmationSignature.isRefused)){
 		if (bufferForPackageSent.isFree){
 			waitingConfirmationSignature.isFree = true;
 			const size_t bufferSize = 2*JSON_OBJECT_SIZE(4);
@@ -73,7 +74,10 @@ void treatWaitingSignature(){
 
 			JsonObject & objBody = jsonBuffer.createObject();
 			objBody["signed_text"]= waitingConfirmationSignature.signedText;
-			objBody["signature"] = (const char*) waitingConfirmationSignature.sigb64;
+			if (waitingConfirmationSignature.isRefused)
+				objBody["signature"] = "[refused]";
+			else
+				objBody["signature"] = (const char*) waitingConfirmationSignature.sigb64;
 			objBody["signing_path"] = (const char*) waitingConfirmationSignature.signing_path;
 			objBody["address"] = (const char*) waitingConfirmationSignature.address;
 
@@ -171,6 +175,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 					strcpy(waitingConfirmationSignature.recipientHub, recipientHub);
 					Base64.encode(waitingConfirmationSignature.signedText,(char *)hash, 32);
 					waitingConfirmationSignature.isConfirmed = false;
+					waitingConfirmationSignature.isRefused = false;
 					waitingConfirmationSignature.isFree = false;
 					if (_cbSignatureToConfirm){
 						_cbSignatureToConfirm(waitingConfirmationSignature.signedText, waitingConfirmationSignature.JsonDigest);
