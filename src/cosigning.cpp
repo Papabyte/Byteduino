@@ -32,7 +32,7 @@ String getOnGoingSignatureJsonString(){
 	JsonObject & mainObject = jsonBuffer.createObject();
 	if (!waitingConfirmationSignature.isFree){
 		mainObject["signedText"] = (const char *) waitingConfirmationSignature.signedText;
-		mainObject["digest"] = (const char *) waitingConfirmationSignature.JsonDigest;
+		mainObject["digest"] = RawJson((const char *) waitingConfirmationSignature.JsonDigest);
 		mainObject["isConfirmed"] = (const bool) waitingConfirmationSignature.isConfirmed;
 		mainObject["isRefused"] = (const bool) waitingConfirmationSignature.isRefused;
 	}
@@ -110,7 +110,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 		Serial.println(F("remove authentifier"));
 #endif
 	}
-
+	
 	//these unit properties aren't to be signed
 	removeKeyIfExisting("unit", unsignedUnit);
 	removeKeyIfExisting("headers_commission", unsignedUnit);
@@ -122,26 +122,41 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 	//we create a JSON digest about what will signed
 	DynamicJsonBuffer jsonBuffer(1000);
 	JsonArray & arrayDigest = jsonBuffer.createArray();
-	JsonObject & objPayments= jsonBuffer.createObject();
 	for (size_t i=0; i < messagesSize; i++){
 		const char * app = unsignedUnit["messages"][i]["app"];
+		JsonObject & objApp = jsonBuffer.createObject();
+
 		if (strcmp(app,"payment") == 0){
-			if (unsignedUnit["messages"][i]["payload"]["outputs"].is<JsonArray>()){
-				size_t outputsSize = unsignedUnit["messages"][i]["payload"]["outputs"].size();
-				for (size_t j = 0; j<outputsSize; j++){
-					const char* address = unsignedUnit["messages"][i]["payload"]["outputs"][j]["address"];
-					if (address != nullptr && strlen(address) == 32) {
-						if (unsignedUnit["messages"][i]["payload"]["outputs"][j]["amount"].is<int>()){
-							int amountToAdd = unsignedUnit["messages"][i]["payload"]["outputs"][j]["amount"];
-							if (!objPayments.containsKey(address)){
-								objPayments[address] = amountToAdd;
-							} else {
-								int previousAmount = objPayments[address];
-								objPayments[address] = previousAmount + amountToAdd;
+			objApp["type"] = "payment";
+			if (unsignedUnit["messages"][i]["payload"].is<JsonObject>()){
+				JsonObject & payload = unsignedUnit["messages"][i]["payload"];
+				const char* payload_asset = payload["asset"];
+				if (payload_asset == nullptr)
+					objApp["asset"] = (char*) "byte";
+				else
+					objApp["asset"] = (char *) payload_asset;
+					
+				if (payload["outputs"].is<JsonArray>()){
+					if (!objApp.containsKey("outputs"))
+						objApp.createNestedObject("outputs");
+					size_t outputsSize = payload["outputs"].size();
+					for (size_t j = 0; j<outputsSize; j++){
+						const char* address = payload["outputs"][j]["address"];
+						if (address != nullptr && strlen(address) == 32) {
+							if (payload["outputs"][j]["amount"].is<int>()){
+								int amountToAdd = payload["outputs"][j]["amount"];
+								JsonObject & objAppOutputs =	objApp["outputs"];
+								if (objAppOutputs.containsKey(address)){
+									int previousAmount = objAppOutputs[address];
+									objAppOutputs[address] = previousAmount + amountToAdd;
+								} else {
+									objAppOutputs[(char *)address] = amountToAdd;
+								}
 							}
 						}
 					}
 				}
+				arrayDigest.add(objApp);
 			}
 		} else {
 			if (unsignedUnit["messages"][i]["payload"].is<JsonObject>()){
@@ -152,7 +167,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 		removeKeyIfExisting("payload", unsignedUnit["messages"][i]);
 		removeKeyIfExisting("payload_uri", unsignedUnit["messages"][i]);
 	}
-	arrayDigest.add(objPayments);
+	
 
 	uint8_t hash[32];
 	getSHA256ForJsonObject(hash, unsignedUnit);
@@ -208,50 +223,49 @@ void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPack
 	if (receivedPackage["body"]["unsigned_unit"].is<JsonObject>()){
 
 		if (receivedPackage["body"]["unsigned_unit"]["messages"].is<JsonArray>()){
-
-			int arraySize = receivedPackage["body"]["unsigned_unit"]["messages"].size();
-			if (arraySize > 0){
-				for (int i = 0;i<arraySize;i++){
-					if(receivedPackage["body"]["unsigned_unit"]["messages"][i].is<JsonObject>()){
-						if(receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"].is<JsonObject>()){
-							
-							const char* device_hub = receivedPackage["device_hub"];
-							if (device_hub != nullptr){
-								if(strlen(device_hub) < MAX_HUB_STRING_SIZE){
+			const char* device_hub = receivedPackage["device_hub"];
+			if (device_hub != nullptr){
+				if(strlen(device_hub) < MAX_HUB_STRING_SIZE){
+					int arraySize = receivedPackage["body"]["unsigned_unit"]["messages"].size();
+					if (arraySize > 0){
+						for (int i = 0;i<arraySize;i++){
+							if(receivedPackage["body"]["unsigned_unit"]["messages"][i].is<JsonObject>()){
+								if(receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"].is<JsonObject>()){
 									const char * payloadHash = receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload_hash"];
 									char hashB64[45];
 									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"]);
-									if (strcmp(hashB64,payloadHash) == 0){
-										stripSignAndAddToConfirmationRoom(senderPubkey,device_hub, receivedPackage["body"]);
-									}else{
-		#ifdef DEBUG_PRINT
+									if (strcmp(hashB64,payloadHash) != 0){
+#ifdef DEBUG_PRINT
 									Serial.println(F("payload hash does not match"));
 									Serial.println(hashB64);
 									Serial.println(payloadHash);
-		#endif
+#endif
+									return;
 									}
+					
+
+								}else{
+#ifdef DEBUG_PRINT
+									Serial.println(F("payload must be an object"));
+#endif
+									return;
 								}
+							}else{
+#ifdef DEBUG_PRINT
+								Serial.println(F("message must be an object"));
+#endif
+								return;
 							}
 
-						}else{
-#ifdef DEBUG_PRINT
-							Serial.println(F("payload must be an object"));
-#endif
-							return;
 						}
-					}else{
+						stripSignAndAddToConfirmationRoom(senderPubkey,device_hub, receivedPackage["body"]);
+
+					} else {
 #ifdef DEBUG_PRINT
-						 Serial.println(F("message must be an object"));
+						Serial.println(F("arraySize must be >0"));
 #endif
-						return;
 					}
-
 				}
-
-			} else {
-#ifdef DEBUG_PRINT
-				Serial.println(F("arraySize must be >0"));
-#endif
 			}
 
 		} else {
