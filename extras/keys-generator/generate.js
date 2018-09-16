@@ -10,10 +10,10 @@ var seed = readline.question("Enter your seed or just press enter to generate a 
 if (seed.length>0){
 	if (!Mnemonic.isValid(seed)){
 		return console.log("seed is not valid");
-}
+	}
 	
-var mnemonic = new Mnemonic(seed);
-} else{
+	var mnemonic = new Mnemonic(seed);
+} else {
 	var mnemonic = new Mnemonic(); // generates new mnemonic
 	while (!Mnemonic.isValid(mnemonic.toString()))
 		mnemonic = new Mnemonic();
