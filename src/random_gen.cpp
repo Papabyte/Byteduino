@@ -3,7 +3,7 @@
 
 #include "random_gen.h"
 
-byte cycle = 0;
+byte fillingIndex = 0;
 int randomPoolTicker = 0;
 uint8_t randomPool[87];
 bool isRandomPoolReady = false;
@@ -53,14 +53,17 @@ bool getRandomNumbersForTag(uint8_t *dest, unsigned size) {
 void updateRandomPool(){
 
 	randomPoolTicker++;
-	if (randomPoolTicker == 1200){ //need to wait around 5 mega cycles to be sure random number generator is reliable
+	if (randomPoolTicker == RANDOM_POOL_TICKER_RESET){ //need to wait around 5 mega cycles to be sure random number generator is reliable
 		randomPoolTicker = 0;
-		uint32_t* randReg = (uint32_t*) RANDOM_REGISTER; //read random number register
-		byte fromHardRandomGen = (byte) *randReg;
-		randomPool[cycle] = (GET_CYCLE_COUNT & 0xff) ^ fromHardRandomGen;
-		cycle++;
-		if (cycle > 86) {
-			cycle = 0;
+		uint32_t fromHardRandomGen = READ_PERI_REG(RANDOM_REGISTER);
+		randomPool[fillingIndex] = (0xff) ^ fromHardRandomGen;
+		randomPool[fillingIndex+1] = (0xff) ^ (fromHardRandomGen >> 8);
+		randomPool[fillingIndex+2] = (0xff) ^ (fromHardRandomGen >> 16) ^ GET_CYCLE_COUNT;
+		randomPool[fillingIndex+3] = (0xff) ^ (fromHardRandomGen >> 24) ^ (GET_CYCLE_COUNT >> 8);
+
+		fillingIndex+=4;
+		if (fillingIndex > 86) {
+			fillingIndex = 0;
 			isRandomPoolReady = true;
 		}
 	}

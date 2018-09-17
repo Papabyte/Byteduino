@@ -17,7 +17,7 @@ typedef struct Byteduino{
 	bool isInitialized = false;
 	bool isConnected = false;
 	bool isAuthenticated = false;
-	bool isMessengerKeyTobeRotated = true;
+	int  messengerKeyRotationTimer = 10;
 	char deviceName[MAX_DEVICE_NAME_STRING_SIZE];
 	char deviceAddress[34];
 

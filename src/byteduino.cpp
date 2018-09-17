@@ -83,13 +83,13 @@ void byteduino_init (){
 	//set up base timer
 #if defined(ESP8266)
 	os_timer_setfn(&baseTimer, timerCallback, NULL);
-	os_timer_arm(&baseTimer, 10, true);
+	os_timer_arm(&baseTimer, 1000, true);
 #endif
 
 #if defined(ESP32)
 	timer = timerBegin(1, 80, true);
 	timerAttachInterrupt(timer, &timerCallback, true);
-	timerAlarmWrite(timer, 10000, true);
+	timerAlarmWrite(timer, 1000000, true);
 	timerAlarmEnable(timer);
 #endif
 
@@ -176,11 +176,14 @@ void byteduino_loop(){
 	}
 	if (baseTickOccured == true) {
 		job2Seconds++;
-		if (job2Seconds == 200){
+		if (job2Seconds == 2){
 			if (byteduino_device.isConnected)
 				sendHeartbeat();
 				job2Seconds = 0;
 		}
+	if (byteduino_device.messengerKeyRotationTimer > 0)
+		byteduino_device.messengerKeyRotationTimer--;
+
     baseTickOccured = false;
 	managePackageSentTimeOut();
 	}
@@ -191,8 +194,8 @@ void byteduino_loop(){
 		byteduino_init ();
 	}
 	
-	if (byteduino_device.isMessengerKeyTobeRotated && byteduino_device.isAuthenticated){
-		byteduino_device.isMessengerKeyTobeRotated = false;
+	if (byteduino_device.messengerKeyRotationTimer == 0 && byteduino_device.isAuthenticated){
+		byteduino_device.messengerKeyRotationTimer = SECONDS_BETWEEN_KEY_ROTATION;
 		setAndSendNewMessengerKey();
 	}
 	
