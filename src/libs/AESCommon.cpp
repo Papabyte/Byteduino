@@ -30,7 +30,7 @@
  * \class AESCommon AES.h <AES.h>
  * \brief Abstract base class for AES block ciphers.
  *
- * This class is abstract.  The caller should instantiate AES128,
+ * This class is abstract.  The caller should instantiate AES128BDBD,
  * AES192, or AES256 to create an AES block cipher with a specific
  * key size.
  *
@@ -42,7 +42,7 @@
  *
  * Reference: http://en.wikipedia.org/wiki/Advanced_Encryption_Standard
  *
- * \sa ChaCha, AES128, AES192, AES256
+ * \sa ChaCha, AES128BD, AES192, AES256
  */
 
 /** @cond sbox */

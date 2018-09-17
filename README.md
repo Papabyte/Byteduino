@@ -1,4 +1,4 @@
-##  A very light C/C++ implementation of Byteball for Arduino
+##  A very light C/C++ implementation of Byteball for Arduino ESP8266 and ESP32
 
 **Library still at an experimental stage and under heavy development!**
 
@@ -26,14 +26,6 @@ coming next!
 Beside sending payments, this function will allow to post data into the immutable public ledger while proving they existed at time they were posted.
 
 
-#### Features
-
-- Handle pairing request
-- Send and receive encrypted messages
-- Handle multidevice wallet creation
-- Cosign an unit containing transactions and/or data (private assets not supported)
-
-
 #### Supported hardware
 
 - [ ] ESP8266 [Arduino for ESP8266](https://github.com/esp8266/Arduino/)
@@ -45,10 +37,10 @@ Beside sending payments, this function will allow to post data into the immutabl
 
 #### Get started
 ##### Installation
-git clone or unpack this github into the Arduino libraries folder.
+Search for Byteduino in Arduino library manager and install the last version.
 
 ##### External libraries
-Some external libraries are required. You can add them to your Arduino IDE through the libraries manager.
+Some external libraries are required, you have to add them to your Arduino IDE through the library manager:
 
  - **ArduinoJson** by Benoit Blanchon version 5.13.2 (not compatible with version 6!)
  - **micro-ecc** by Kenneth MacKay version 1.0.0

@@ -73,7 +73,7 @@ void AESCommon::clear()
     clean(ctx.key, sizeof(ctx.key));
 }
 
-AES128::~AES128()
+AES128BD::~AES128BD()
 {
 }
 

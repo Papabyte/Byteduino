@@ -394,9 +394,6 @@ void WebSockets::handleWebsocketCb(WSclient_t * client) {
         buffer += 4;
     }
 	
-	 if(header->payloadLen > WEBSOCKETS_MAX_DATA_SIZE) {
-		header->payloadLen = WEBSOCKETS_MAX_DATA_SIZE;
-	 };
 
     if(header->payloadLen > 0) {
         // if text data we need one more

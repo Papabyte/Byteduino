@@ -27,7 +27,7 @@
 #if defined(CRYPTO_AES_DEFAULT) || defined(CRYPTO_DOC)
 
 /**
- * \class AES128 AES.h <AES.h>
+ * \class AES128BD AES.h <AES.h>
  * \brief AES block cipher with 128-bit keys.
  *
  * \sa AES192, AES256, AESTiny128, AESSmall128
@@ -39,13 +39,13 @@
  * This constructor must be followed by a call to setKey() before the
  * block cipher can be used for encryption or decryption.
  */
-AES128::AES128()
+AES128BD::AES128BD()
 {
     rounds = 10;
     schedule = sched;
 }
 
-AES128::~AES128()
+AES128BD::~AES128BD()
 {
     clean(sched);
 }
@@ -54,12 +54,12 @@ AES128::~AES128()
  * \brief Size of a 128-bit AES key in bytes.
  * \return Always returns 16.
  */
-size_t AES128::keySize() const
+size_t AES128BD::keySize() const
 {
     return 16;
 }
 
-bool AES128::setKey(const uint8_t *key, size_t len)
+bool AES128BD::setKey(const uint8_t *key, size_t len)
 {
     if (len != 16)
         return false;
@@ -103,12 +103,12 @@ bool AES128::setKey(const uint8_t *key, size_t len)
  * \class AESTiny128 AES.h <AES.h>
  * \brief AES block cipher with 128-bit keys and tiny memory usage.
  *
- * This class differs from the AES128 class in the following ways:
+ * This class differs from the AES128BD class in the following ways:
  *
  * \li RAM requirements are vastly reduced.  The key is stored directly
  * and then expanded to the full key schedule round by round.  The setKey()
  * method is very fast because of this.
- * \li Performance of encryptBlock() is slower than for AES128 due to
+ * \li Performance of encryptBlock() is slower than for AES128BD due to
  * expanding the key on the fly rather than ahead of time.
  * \li The decryptBlock() function is not supported, which means that CBC
  * mode cannot be used but the CTR, CFB, OFB, EAX, and GCM modes can be used.
@@ -119,7 +119,7 @@ bool AES128::setKey(const uint8_t *key, size_t len)
  * The companion AESSmall128 class supports decryptBlock() at the cost of
  * some additional memory and slower setKey() times.
  *
- * \sa AESSmall128, AES128
+ * \sa AESSmall128, AES128BD
  */
 
 /** @cond */
@@ -246,7 +246,7 @@ void AESTiny128::clear()
  * \class AESSmall128 AES.h <AES.h>
  * \brief AES block cipher with 128-bit keys and reduced memory usage.
  *
- * This class differs from the AES128 class in that the RAM requirements are
+ * This class differs from the AES128BD class in that the RAM requirements are
  * vastly reduced.  The key schedule is expanded round by round instead of
  * being generated and stored by setKey().  The performance of encryption
  * and decryption is slightly less because of this.
@@ -259,7 +259,7 @@ void AESTiny128::clear()
  * do not need the decryptBlock() operation, so AESTiny128 may be a better
  * option than AESSmall128 for many applications.
  *
- * \sa AESTiny128, AES128
+ * \sa AESTiny128, AES128BD
  */
 
 /**

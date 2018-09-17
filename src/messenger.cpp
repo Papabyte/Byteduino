@@ -33,7 +33,7 @@ void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,ch
 
 	uint8_t hashedSecret[16];
 	getSHA256(hashedSecret, (const char*)secret, 32, 16);
-	GCM<AES128> gcm;
+	GCM<AES128BD> gcm;
 
 	uint8_t authTag[16];
 
@@ -58,16 +58,23 @@ void encryptAndSendPackage(){
 
 #ifdef UNIQUE_WEBSOCKET
 if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
-#ifdef DEBUG_PRINT
+	#ifdef DEBUG_PRINT
 	Serial.println(F("Recipient must be on the same hub"));
-#endif 
+	#endif 
 	bufferForPackageSent.isFree = true;
 	return;
 }
 #endif
 	const char * recipientTempMessengerkey = bufferForPackageSent.recipientTempMessengerkey;  
-
+#if defined(ESP8266)
 	char messageB64[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100];
+#endif
+#if defined(ESP32)
+char * messageB64 = NULL;
+messageB64 = (char *) malloc ((const int) SENT_PACKAGE_BUFFER_SIZE*134/100);
+
+#endif
+
 	char ivb64 [17];
 	char authTagB64 [25];
 	encryptPackage(recipientTempMessengerkey, messageB64, ivb64, authTagB64);
@@ -112,6 +119,10 @@ if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
 
 	String output;
 	mainArray.printTo(output);
+
+#if defined(ESP32)
+	free (messageB64);
+#endif
 #ifdef DEBUG_PRINT
 	Serial.println(output);
 #endif
@@ -263,7 +274,7 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& encryptedPackage, const char* 
 	uint8_t hashedSecret[16];
 	getSHA256(hashedSecret ,(const char*)secret, 32,16);
 
-	GCM<AES128> gcm;
+	GCM<AES128BD> gcm;
 
 	const char * authtagb64 = encryptedPackage["authtag"];
 	uint8_t authTag[18];

@@ -2,21 +2,38 @@
 // MIT License
 #include <byteduino.h>
 
-
+#ifdef ESP8266
 extern "C" {
 	#include "user_interface.h"
 }
+os_timer_t baseTimer;
+#endif
+
+#ifdef ESP32
+hw_timer_t * timer = NULL;
+#endif
 
 WebSocketsClient webSocketForHub;
 //WebSocketsClient secondaryWebSocket;
 
-os_timer_t baseTimer;
-bool baseTickOccured = false;
+
+static volatile bool baseTickOccured = false;
 byte job2Seconds = 0;
 bufferPackageReceived bufferForPackageReceived;
 bufferPackageSent bufferForPackageSent;
 Byteduino byteduino_device; 
 
+#if defined(ESP8266)
+void timerCallback(void * pArg) {
+	baseTickOccured = true;
+}
+#endif
+
+#if defined(ESP32)
+void IRAM_ATTR timerCallback() {
+	baseTickOccured = true;
+}
+#endif
 
 void setHub(const char * hub){
 	if(strlen(hub) < MAX_HUB_STRING_SIZE){
@@ -64,15 +81,25 @@ void byteduino_init (){
 	webSocketForHub.onEvent(webSocketEvent);
 	
 	//set up base timer
+#if defined(ESP8266)
 	os_timer_setfn(&baseTimer, timerCallback, NULL);
 	os_timer_arm(&baseTimer, 10, true);
+#endif
+
+#if defined(ESP32)
+	timer = timerBegin(1, 80, true);
+	timerAttachInterrupt(timer, &timerCallback, true);
+	timerAlarmWrite(timer, 10000, true);
+	timerAlarmEnable(timer);
+#endif
+
 	EEPROM.begin(TOTAL_USED_FLASH);
 	
 	uECC_set_rng(&getRandomNumbersForUecc);
 	
 	byteduino_device.isInitialized = true;
 
-	//	secondaryWebSocket.beginSSL(byteduino_device.hub, 443,  "/bb-test");
+	//secondaryWebSocket.beginSSL(byteduino_device.hub, 443,  "/bb-test");
 	//secondaryWebSocket.onEvent(secondaryWebSocketEvent);
 }
 
@@ -154,9 +181,8 @@ void byteduino_loop(){
 				sendHeartbeat();
 				job2Seconds = 0;
 		}
-		
-		baseTickOccured = false;
-		managePackageSentTimeOut();
+    baseTickOccured = false;
+	managePackageSentTimeOut();
 	}
 	
 	updateRandomPool();
@@ -171,8 +197,3 @@ void byteduino_loop(){
 	}
 	
 }
-
-void timerCallback(void * pArg) {
-	baseTickOccured = true;
-}
-

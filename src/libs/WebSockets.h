@@ -63,6 +63,12 @@
 // moves all Header strings to Flash (~300 Byte)
 //#define WEBSOCKETS_SAVE_RAM
 
+#elif defined(ESP32)
+
+#define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
+#define WEBSOCKETS_USE_BIG_MEM
+#define GET_FREE_HEAP ESP.getFreeHeap()
+
 #elif defined(STM32_DEVICE)
 
 #define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
@@ -77,7 +83,6 @@
 #define WEBSOCKETS_SAVE_RAM
 
 #endif
-
 
 #define WEBSOCKETS_TCP_TIMEOUT    (2000)
 

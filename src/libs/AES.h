@@ -72,11 +72,11 @@ protected:
     friend class AESSmall256;
 };
 
-class AES128 : public AESCommon
+class AES128BD : public AESCommon
 {
 public:
-    AES128();
-    virtual ~AES128();
+    AES128BD();
+    virtual ~AES128BD();
 
     size_t keySize() const;
 
@@ -191,10 +191,10 @@ private:
 #if defined(CRYPTO_AES_ESP32)
 
 // "hwcrypto/aes.h" includes "rom/aes.h" which defines global enums for
-// AES128, AES192, and AES256.  The enum definitions interfere with the
+// AES128BD, AES192, and AES256.  The enum definitions interfere with the
 // definition of the same-named classes below.  The #define's and #undef's
 // here work around the problem by defining the enums to different names.
-#define AES128 AES128_enum
+#define AES128 AES128BD_enum
 #define AES192 AES192_enum
 #define AES256 AES256_enum
 #include "hwcrypto/aes.h"
@@ -224,11 +224,11 @@ private:
     esp_aes_context ctx;
 };
 
-class AES128 : public AESCommon
+class AES128BD : public AESCommon
 {
 public:
-    AES128() : AESCommon(16) {}
-    virtual ~AES128();
+    AES128BD() : AESCommon(16) {}
+    virtual ~AES128BD();
 };
 
 class AES192 : public AESCommon
@@ -246,10 +246,10 @@ public:
 };
 
 // The ESP32 AES context is so small that it already qualifies as "tiny".
-typedef AES128 AESTiny128;
-typedef AES256 AESTiny256;
-typedef AES128 AESSmall128;
-typedef AES256 AESSmall256;
+typedef AES128BD AESTiny128;
+//typedef AES256 AESTiny256;
+typedef AES128BD AESSmall128;
+//typedef AES256 AESSmall256;
 
 #endif // CRYPTO_AES_ESP32
 
