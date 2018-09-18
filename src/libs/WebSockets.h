@@ -55,7 +55,7 @@
 #define NODEBUG_WEBSOCKETS
 #endif
 
-#if defined(ESP8266) || defined(ESP32)
+#if defined(ESP8266)
 
 #define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
 #define WEBSOCKETS_USE_BIG_MEM
@@ -65,7 +65,7 @@
 
 #elif defined(ESP32)
 
-#define WEBSOCKETS_MAX_DATA_SIZE  (15*1024)
+#define WEBSOCKETS_MAX_DATA_SIZE  (30*1024)
 #define WEBSOCKETS_USE_BIG_MEM
 #define GET_FREE_HEAP ESP.getFreeHeap()
 

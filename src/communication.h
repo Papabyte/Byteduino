@@ -17,7 +17,7 @@ void treatResponseFromHub(JsonArray& arr);
 void treatReceivedPackage();
 void requestCorrespondentPubkey(char senderPubkey [45]);
 void getTag(char * tag, const char * extension);
-void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+void secondWebSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void connectSecondaryWebsocket();
 bool isValidArrayFromHub(JsonArray& arr);
 int sendTxtMessage(const char recipientPubkey [45],const char * deviceHub, const char * text);

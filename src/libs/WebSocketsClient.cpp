@@ -50,6 +50,8 @@ void WebSocketsClient::begin(const char *host, uint16_t port, const char * url, 
     _client.tcp = NULL;
 #if (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266) || (WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP32)
     _client.isSSL = false;
+   // if (_client.ssl)
+  //      delete _client.ssl;
     _client.ssl = NULL;
 #endif
     _client.cUrl = url;

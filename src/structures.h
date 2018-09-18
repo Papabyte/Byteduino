@@ -17,6 +17,7 @@ typedef struct Byteduino{
 	bool isInitialized = false;
 	bool isConnected = false;
 	bool isAuthenticated = false;
+	bool isConnectingToSecondWebSocket = false;
 	int  messengerKeyRotationTimer = 10;
 	char deviceName[MAX_DEVICE_NAME_STRING_SIZE];
 	char deviceAddress[34];
@@ -43,6 +44,7 @@ typedef struct bufferPackageSent{
 	char message[SENT_PACKAGE_BUFFER_SIZE];
 	char recipientPubkey[45];
 	char recipientHub[MAX_HUB_STRING_SIZE];
+	bool isOnSameHub = false;
 	char recipientTempMessengerkey[45];
 	bool isRecipientTempMessengerKeyKnown = false;
 	bool isFree = true;

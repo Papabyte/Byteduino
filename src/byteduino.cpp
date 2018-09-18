@@ -14,8 +14,9 @@ hw_timer_t * timer = NULL;
 #endif
 
 WebSocketsClient webSocketForHub;
-//WebSocketsClient secondaryWebSocket;
-
+#if !UNIQUE_WEBSOCKET
+WebSocketsClient secondWebSocket;
+#endif
 
 static volatile bool baseTickOccured = false;
 byte job2Seconds = 0;
@@ -80,6 +81,10 @@ void byteduino_init (){
 	webSocketForHub.beginSSL(getDomain(byteduino_device.hub), byteduino_device.port, getPath(byteduino_device.hub));
 	webSocketForHub.onEvent(webSocketEvent);
 	
+#if !UNIQUE_WEBSOCKET
+	secondWebSocket.onEvent(secondWebSocketEvent);
+#endif
+
 	//set up base timer
 #if defined(ESP8266)
 	os_timer_setfn(&baseTimer, timerCallback, NULL);
@@ -94,13 +99,9 @@ void byteduino_init (){
 #endif
 
 	EEPROM.begin(TOTAL_USED_FLASH);
-	
 	uECC_set_rng(&getRandomNumbersForUecc);
-	
 	byteduino_device.isInitialized = true;
 
-	//secondaryWebSocket.beginSSL(byteduino_device.hub, 443,  "/bb-test");
-	//secondaryWebSocket.onEvent(secondaryWebSocketEvent);
 }
 
 void printDeviceInfos(){
@@ -155,22 +156,16 @@ void byteduino_loop(){
 	
 	webSocketForHub.loop();
 	yield();
-	//secondaryWebSocket.loop();
-	
+#if !UNIQUE_WEBSOCKET
+	secondWebSocket.loop();
+#endif
+
 	if (byteduino_device.isConnected){
 		treatReceivedPackage();
 		treatNewWalletCreation();
 		treatWaitingSignature();
+		treatSentPackage();
 
-		if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested){
-			requestRecipientMessengerTempKey();
-		}
-
-		if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
-			encryptAndSendPackage();
-			yield(); //we let the wifi stack work since AES encryption may have been long
-		}
-		
 		if (bufferForPackageReceived.hasUnredMessage && bufferForPackageReceived.isFree && !bufferForPackageReceived.isRequestingNewMessage)
 			refreshMessagesFromHub();
 	}

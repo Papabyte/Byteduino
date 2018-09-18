@@ -5,7 +5,9 @@
 
 
 extern WebSocketsClient webSocketForHub;
-//extern WebSocketsClient secondaryWebSocket;
+#if !UNIQUE_WEBSOCKET
+extern WebSocketsClient secondWebSocket;
+#endif
 
 extern Byteduino byteduino_device;
 extern bufferPackageReceived bufferForPackageReceived;
@@ -87,80 +89,35 @@ String getPath(const char * hub){
 	return returnedString;
 }
 
-/*
-void connectSecondaryWebsocket(){
-	
-	size_t hubNameLength = strlen(bufferForPackageSent.recipientHub);
-	
-	char url [40];
-	char path [10];
-	size_t i = 0;
-		
-	while (bufferForPackageSent.recipientHub[i] != 0x2F && i < 50){ //while not "/"
-	i++;
-	}
-	memcpy(url,bufferForPackageSent.recipientHub,i);
-	url[i] = 0x00;
-	memcpy(path,bufferForPackageSent.recipientHub+i,hubNameLength-i);
-	path[hubNameLength-i] = 0x00;
-	Serial.println(url);
-	Serial.println(path);
-	secondaryWebSocket.disconnect();
-	secondaryWebSocket.beginSSL(url, 443, path);
-	secondaryWebSocket.onEvent(secondaryWebSocketEvent);
-}*/
+#if !UNIQUE_WEBSOCKETT
 
-//["request",{"command":"hub/get_temp_pubkey","params":"AnU9jftJF3Pn0J02+MhH01jNeStU978vthO9M1B9Yf8f","tag":"c1AUOMMdkFYCxMNvMhSjOgQj9ajXwIrGsksWxW7f5yg="}] 
-
-
-
-
-/*
 void treatResponseFromSecondWebsocket(JsonArray& arr){
 	if (arr[1].is<JsonObject>()) {
 		const char* tag = arr[1]["tag"];
 		if (tag != nullptr) {
-			if (strncmp(tag,byteduino_device.tagId,TAG_LENGTH)){
-			if (tag[10] == GET_RECIPIENT_KEY[1]){
-					Serial.println(F("recipient pub key received"));
-				secondaryWebSocket.disconnect();
-
-				}
-				
-			}else{
-#ifdef DEBUG_PRINT
-			Serial.println(F("wrong tag id for response"));
-#endif
+			if  (tag[9] == GET_RECIPIENT_KEY[1]){
+				checkAndUpdateRecipientKey(arr[1]);
 			}
-			
-		} else {
-#ifdef DEBUG_PRINT
-			Serial.println(F("response should contain a tag"));
-#endif
 		}
-		
 	} else {
 #ifdef DEBUG_PRINT
-		Serial.println(F("Second array of response should contain a object"));
+		Serial.println(F("Second array second websocket should contain an object"));
 #endif
-	}
-}*/
+	}	
+}
 
 
-
-/*
-void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+void secondWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 	switch (type) {
 		case WStype_DISCONNECTED:
 			Serial.println(F("2nd Wss disconnected\n"));
-			secondaryWebSocket.disconnect();
 		break;
 		case WStype_CONNECTED:
 		{
 			Serial.printf("2nd Wss connected to: %s\n", payload);
-			requestMessengerTempKey();
-			
+			if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested)
+				requestRecipientMessengerTempKey();
 		}
 		break;
 		case WStype_TEXT:
@@ -180,13 +137,11 @@ void secondaryWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 		if (strcmp(arr[0], "response") == 0) {
 		treatResponseFromSecondWebsocket(arr);
 	}
-			
-			//respondToHub(payload);
 	break;
   }
 }
 
-*/
+#endif
 
 int sendTxtMessage(const char recipientPubKey [45],const char * recipientHub, const char * text){
 

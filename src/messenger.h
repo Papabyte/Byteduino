@@ -31,3 +31,4 @@ void loadBufferPackageSent(const char * recipientPubKey, const char *  recipient
 void treatInnerPackage(JsonObject&  encryptedPackage);
 void managePackageSentTimeOut();
 void refreshMessagesFromHub();
+void treatSentPackage();

@@ -2,12 +2,45 @@
 // MIT License
 #include "messenger.h"
 
-extern WebSocketsClient webSocketForHub;
 extern Byteduino byteduino_device;
 
 extern messengerKeys myMessengerKeys;
 extern bufferPackageReceived bufferForPackageReceived;
 extern bufferPackageSent bufferForPackageSent;
+
+extern WebSocketsClient webSocketForHub;
+#if !UNIQUE_WEBSOCKET
+extern WebSocketsClient secondWebSocket;
+#endif
+
+void treatSentPackage(){
+	if (bufferForPackageSent.isOnSameHub){
+		if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested){
+			requestRecipientMessengerTempKey();
+		}
+
+		if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
+			encryptAndSendPackage();
+			yield(); //we let the wifi stack work since AES encryption may have been long
+		}
+	} 
+#if !UNIQUE_WEBSOCKET
+	else {
+		if (!byteduino_device.isConnectingToSecondWebSocket){
+	#ifdef DEBUG_PRINT
+			Serial.println(F("Connect to second websocket"));
+	#endif 
+			secondWebSocket.disconnect();
+			secondWebSocket.beginSSL(getDomain(bufferForPackageSent.recipientHub), byteduino_device.port, getPath(byteduino_device.hub));
+			byteduino_device.isConnectingToSecondWebSocket = true;
+		} else if (!bufferForPackageSent.isFree && bufferForPackageSent.isRecipientTempMessengerKeyKnown){
+			encryptAndSendPackage();
+			yield(); //we let the wifi stack work since AES encryption may have been long
+		} 
+	}
+#endif
+
+}
 
 
 void managePackageSentTimeOut(){
@@ -17,6 +50,9 @@ void managePackageSentTimeOut(){
 
 	if (bufferForPackageSent.timeOut == 0 && !bufferForPackageSent.isFree){
 		bufferForPackageSent.isFree = true;
+#if !UNIQUE_WEBSOCKET
+	//	secondWebSocket.disconnect();
+#endif 	
 #ifdef DEBUG_PRINT
 		Serial.println(F("Recipient key was never received"));
 #endif 
@@ -56,23 +92,13 @@ void encryptPackage(const char * recipientTempMessengerkey, char * messageB64,ch
 
 void encryptAndSendPackage(){
 
-#ifdef UNIQUE_WEBSOCKET
-if (strcmp(bufferForPackageSent.recipientHub, byteduino_device.hub) != 0){
-	#ifdef DEBUG_PRINT
-	Serial.println(F("Recipient must be on the same hub"));
-	#endif 
-	bufferForPackageSent.isFree = true;
-	return;
-}
-#endif
 	const char * recipientTempMessengerkey = bufferForPackageSent.recipientTempMessengerkey;  
-#if defined(ESP8266)
+#if defined(ESP8266) //for ESP8266 we use stack memory since we don't have much heap available
 	char messageB64[(const int) SENT_PACKAGE_BUFFER_SIZE*134/100];
 #endif
-#if defined(ESP32)
-char * messageB64 = NULL;
-messageB64 = (char *) malloc ((const int) SENT_PACKAGE_BUFFER_SIZE*134/100);
-
+#if defined(ESP32) //for ESP32 we use heap to be able to send big packages
+	char * messageB64 = NULL;
+	messageB64 = (char *) malloc ((const int) SENT_PACKAGE_BUFFER_SIZE*134/100);
 #endif
 
 	char ivb64 [17];
@@ -126,19 +152,49 @@ messageB64 = (char *) malloc ((const int) SENT_PACKAGE_BUFFER_SIZE*134/100);
 #ifdef DEBUG_PRINT
 	Serial.println(output);
 #endif
+
+#if UNIQUE_WEBSOCKET
 	webSocketForHub.sendTXT(output);
+#else
+	if (bufferForPackageSent.isOnSameHub){
+		webSocketForHub.sendTXT(output);
+	}
+	else{
+		secondWebSocket.sendTXT(output);
+	}
+#endif
 	bufferForPackageSent.isFree =true;
-	
 }
 
 
 void loadBufferPackageSent(const char * recipientPubKey, const char *  recipientHub){
-		memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
-		strcpy(bufferForPackageSent.recipientHub,recipientHub);
-		bufferForPackageSent.timeOut = REQUEST_KEY_TIME_OUT;
-		bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
-		bufferForPackageSent.isFree = false;
-		bufferForPackageSent.isRecipientKeyRequested = false;
+
+	if (strcmp(recipientHub, byteduino_device.hub) != 0){
+		bufferForPackageSent.isOnSameHub = false;
+#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient is not on same hub"));
+#endif 
+#if UNIQUE_WEBSOCKET
+	#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient must be on the same hub"));
+	#endif 
+		bufferForPackageSent.isFree = true;
+		return;
+#endif
+	} else {
+	#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient is on same hub"));
+	#endif 
+		bufferForPackageSent.isOnSameHub = true;
+	}
+
+	memcpy(bufferForPackageSent.recipientPubkey,recipientPubKey,45);
+	strcpy(bufferForPackageSent.recipientHub,recipientHub);
+	bufferForPackageSent.timeOut = REQUEST_KEY_TIME_OUT;
+	bufferForPackageSent.isRecipientTempMessengerKeyKnown = false;
+	bufferForPackageSent.isFree = false;
+	bufferForPackageSent.isRecipientKeyRequested = false;
+	byteduino_device.isConnectingToSecondWebSocket = false;
 }
 
 void requestRecipientMessengerTempKey(){
@@ -163,7 +219,14 @@ void requestRecipientMessengerTempKey(){
 #ifdef DEBUG_PRINT
 	Serial.println(output);
 #endif
+#if UNIQUE_WEBSOCKET
 	webSocketForHub.sendTXT(output);
+#else
+	if (bufferForPackageSent.isOnSameHub)
+		webSocketForHub.sendTXT(output);
+	else
+		secondWebSocket.sendTXT(output);
+#endif
 	bufferForPackageSent.isRecipientKeyRequested = true;
 }
 
@@ -281,7 +344,7 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& encryptedPackage, const char* 
 	Base64.decode(authTag, authtagb64, 25);
 
 	const char* plaintextB64 = encryptedPackage["encrypted_message"];
-	int sizeB64 =   strlen(plaintextB64);
+	int sizeB64 = strlen(plaintextB64);
 	if (sizeB64 < RECEIVED_PACKAGE_BUFFER_SIZE*1.3){
 		Base64.decode(bufferForPackageReceived.message, plaintextB64,  sizeB64);
 		size_t bufferSize = Base64.decodedLength(plaintextB64, sizeB64);
@@ -292,7 +355,7 @@ void decryptPackageAndPlaceItInBuffer(JsonObject& encryptedPackage, const char* 
 		uint8_t iv [12];
 		Base64.decode(iv, ivb64, 17);
 		gcm.setIV(iv, 12);
-		gcm.decrypt(bufferForPackageReceived.message , bufferForPackageReceived.message , bufferSize);
+		gcm.decrypt(bufferForPackageReceived.message, bufferForPackageReceived.message, bufferSize);
 
 		if (!gcm.checkTag(authTag, 16)) {
 #ifdef DEBUG_PRINT
