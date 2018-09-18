@@ -2,14 +2,14 @@
 // MIT License
 #include <byteduino.h>
 
-#ifdef ESP8266
+#if defined(ESP8266)
 extern "C" {
 	#include "user_interface.h"
 }
 os_timer_t baseTimer;
 #endif
 
-#ifdef ESP32
+#if defined(ESP32)
 hw_timer_t * timer = NULL;
 #endif
 
@@ -158,6 +158,7 @@ void byteduino_loop(){
 	yield();
 #if !UNIQUE_WEBSOCKET
 	secondWebSocket.loop();
+	yield();
 #endif
 
 	if (byteduino_device.isConnected){

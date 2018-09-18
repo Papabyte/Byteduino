@@ -2,12 +2,20 @@
 #include <ESP8266WiFiMulti.h>
 #include <byteduino.h>
 
+#if defined (ESP32)
+#include <WiFiMulti.h>
+WiFiMulti WiFiMulti;
+#endif
+
+#if defined (ESP8266)
+#include <ESP8266WiFiMulti.h>
 ESP8266WiFiMulti WiFiMulti;
+#endif
 
 void setup() {
 
   setDeviceName("Byteduino");
-  setHub("byteball.org/bb-test"); //hub for testnet
+  setHub("byteball.org/bb");
 
   //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys
   setPrivateKeyM1("lgVGw/OfKKK4NqtK9fmJjbLCkLv7BGLetrdvsKAngWY=");

@@ -111,11 +111,15 @@ void secondWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 	switch (type) {
 		case WStype_DISCONNECTED:
-			Serial.println(F("2nd Wss disconnected\n"));
+#ifdef DEBUG_PRINT
+		Serial.println(F("2nd Wss disconnected\n"));
+#endif
 		break;
 		case WStype_CONNECTED:
 		{
+#ifdef DEBUG_PRINT
 			Serial.printf("2nd Wss connected to: %s\n", payload);
+#endif
 			if (!bufferForPackageSent.isFree && !bufferForPackageSent.isRecipientKeyRequested)
 				requestRecipientMessengerTempKey();
 		}

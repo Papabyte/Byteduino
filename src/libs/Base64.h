@@ -14,7 +14,7 @@ class Base64Class{
   public:
     int encode(char *output, char *input, int inputLength);
     int decode(char * output, char * input, int inputLength);
-	int encode(char *output, const char *input, int inputLength);
+    int encode(char *output, const char *input, int inputLength);
     int decode(uint8_t* output, const char * input, int inputLength);
     int encodedLength(int plainLength);
     int decodedLength(const char * input, int inputLength);

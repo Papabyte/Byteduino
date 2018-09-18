@@ -27,13 +27,12 @@ Beside sending payments, this function will allow to post data into the immutabl
 
 
 #### Supported hardware
-
 - [ ] ESP8266 [Arduino for ESP8266](https://github.com/esp8266/Arduino/)
 - Limitations: due to the low amount of RAM available for program (around 40KB), this device cannot treat very large messages. It cannot handle units containing more than 50 to 100 inputs/outputs and it must use the same hub as all paired devices and cosigners.
 - Recommended board: Wifi WeMos D1 Mini Pro (~$5 retail price), including 16MB flash and USB-to-serial converter.
 
 - [ ] ESP32 [Arduino for ESP32](https://github.com/espressif/arduino-esp32)
-- coming soon!
+- Recommended board: any board based on ESP32 WROOM module like ESP-32S NodeMCU or WeMos Lolin D32 ($5 to $10 retail price)
 
 #### Get started
 ##### Installation
@@ -71,7 +70,7 @@ The default pairing code will be:
 A/n+A6gRfqy7GI19pMCRoDCPY8KOyy8Khruz0dlvrqhb@byteball.org/bb#0000
 A/n+A6gRfqy7GI19pMCRoDCPY8KOyy8Khruz0dlvrqhb@byteball.org/bb-test#0000 for testnet
 ```
-Copy paste in your sketch the 3 functions with keys as parameters to configre your device.
+Copy paste in your setup() the 3 functions with keys as parameters to configre your device.
 
 ##### Minimal sketch
 
@@ -79,8 +78,16 @@ Copy paste in your sketch the 3 functions with keys as parameters to configre yo
     #include <ESP8266WiFiMulti.h>
     #include <byteduino.h>
     
+    #if defined (ESP32)
+    #include <WiFiMulti.h>
+    WiFiMulti WiFiMulti;
+    #endif
+
+    #if defined (ESP8266)
+    #include <ESP8266WiFiMulti.h>
     ESP8266WiFiMulti WiFiMulti;
-    
+    #endif
+
     void setup() {
     
       setDeviceName("Byteduino");

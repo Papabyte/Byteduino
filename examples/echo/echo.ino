@@ -2,8 +2,15 @@
 #include <ESP8266WiFiMulti.h>
 #include <byteduino.h>
 
-ESP8266WiFiMulti WiFiMulti;
+#if defined (ESP32)
+#include <WiFiMulti.h>
+WiFiMulti WiFiMulti;
+#endif
 
+#if defined (ESP8266)
+#include <ESP8266WiFiMulti.h>
+ESP8266WiFiMulti WiFiMulti;
+#endif
 
 void onTxtMessageReceived(const char* senderPubKey, const char* senderHub, const char* messageReceived) {
 
@@ -11,7 +18,7 @@ void onTxtMessageReceived(const char* senderPubKey, const char* senderHub, const
 
   switch (result) {
     case SUCCESS:
-      Serial.println(F("Message successfully sent"));
+      Serial.println(F("Message successfully placed in buffer"));
       break;
     case TEXT_TOO_LONG:
       Serial.println(F("error, text too long"));
@@ -34,7 +41,7 @@ void onTxtMessageReceived(const char* senderPubKey, const char* senderHub, const
 void setup() {
 
   setDeviceName("Byteduino");
-  setHub("byteball.org/bb-test"); //hub for testnet
+  setHub("byteball.org/bb");
 
   //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys
   setPrivateKeyM1("lgVGw/OfKKK4NqtK9fmJjbLCkLv7BGLetrdvsKAngWY=");
