@@ -6,12 +6,12 @@
 
 bool firstKey;
 
-void getBase64HashForJsonObject (char* hashB64, JsonObject& object){
-
+bool getBase64HashForJsonObject (char* hashB64, JsonObject& object){
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash,object);
+	if (!getSHA256ForJsonObject(hash,object))
+		return false;
 	Base64.encode(hashB64,  (char *) hash, 32);
-
+	return true;
 }
 
 
@@ -24,12 +24,18 @@ void updateHash (ripemd160_ctx* hasher,const char * string, size_t length) {
 }
 
 
-void getSHA256ForJsonObject(uint8_t hash[32] ,JsonObject& object){
+bool getSHA256ForJsonObject(uint8_t hash[32] ,JsonObject& object){
 	
 	SHA256 hasher;
 	firstKey = true;
-	updateHashForObject<SHA256&>(hasher, object);
+	if (!updateHashForObject<SHA256&>(hasher, object)){
+#ifdef DEBUG_PRINT
+		Serial.println(F("Error while hashing object"));
+#endif
+		return false;
+	}
 	hasher.finalize(hash,32);
+		return true;
 }
 
 void getSHA256(uint8_t *hash ,const char * string, size_t inputLength, size_t outputLength){
@@ -63,7 +69,7 @@ void getRipeMD160ForObject(uint8_t hash[20] ,JsonObject& object){
 
 
 
-template <class T> void updateHashForArray (T hasher, JsonArray& array) {
+template <class T> bool updateHashForArray (T hasher, JsonArray& array) {
 
 	size_t arraySize = array.size();
 #ifdef DEBUG_HASHING
@@ -77,12 +83,14 @@ template <class T> void updateHashForArray (T hasher, JsonArray& array) {
 
 		if (array[i].is<JsonObject>()){
 			JsonObject& subObject = array[i];
-			updateHashForObject<T>(hasher, subObject);
+			if (!updateHashForObject<T>(hasher, subObject))
+				return false;
 		}
 		
 		if (array[i].is<JsonArray>()){
 			JsonArray& subArray = array[i];
-			updateHashForArray<T>(hasher, subArray);
+			if (!updateHashForArray<T>(hasher, subArray))
+				return false;
 		}
 		
 		
@@ -104,30 +112,33 @@ template <class T> void updateHashForArray (T hasher, JsonArray& array) {
 	Serial.println("$]");
 #endif
 	updateHash(hasher,"\0]",2);
-	return;
+	return true;
 }
 
 
 
-template <class T> void updateHashForObject (T hasher, JsonObject& object) {
+template <class T> bool updateHashForObject (T hasher, JsonObject& object) {
 
-	char sortedKeys[8][30];
+	char sortedKeys[MAX_KEYS_COUNT][MAX_KEY_SIZE];
 	int numberOfKeysSorted = 0;
-	
+	if (object.size() > MAX_KEYS_COUNT)
+		return false;
 	//we create an array of object keys sorted by alphabetic order
 	for (JsonObject::iterator it=object.begin(); it!=object.end(); ++it) {
 		if (numberOfKeysSorted > 0){
 			int i = numberOfKeysSorted;
-			
+			if (strlen(it->key) >= MAX_KEY_SIZE)
+				return false;
+
 			while (isChar1BeforeChar2(it->key,sortedKeys[i-1]) && i>0){
 				i--;
 			}
 			for (int j = numberOfKeysSorted; j>i;j--){
 				strcpy(sortedKeys[j], sortedKeys[j-1]);
 			}
-			strcpy(sortedKeys[i], it->key);
+				strcpy(sortedKeys[i], it->key);
 		} else {
-			strcpy(sortedKeys[0], it->key);
+				strcpy(sortedKeys[0], it->key);
 		}
 		numberOfKeysSorted++;
 	}
@@ -152,7 +163,8 @@ template <class T> void updateHashForObject (T hasher, JsonObject& object) {
 			updateHash(hasher,key,strlen(key));
 
 			JsonObject& subObject = object[key];
-			updateHashForObject<T>(hasher, subObject);
+			if (!updateHashForObject<T>(hasher, subObject))
+				return false;
 		}
 				
 		if (object[key].is<JsonArray>()){
@@ -171,7 +183,8 @@ template <class T> void updateHashForObject (T hasher, JsonObject& object) {
 			updateHash(hasher,key,strlen(key));
 			
 			JsonArray& subArray = object[key];
-			updateHashForArray<T>(hasher, subArray);
+			if (!updateHashForArray<T>(hasher, subArray))
+				return false;
 		}
 		
 		
@@ -235,7 +248,7 @@ template <class T> void updateHashForObject (T hasher, JsonObject& object) {
 	}
 
 
-	return;
+	return true;
 }
 
 //compare alphabetic order
