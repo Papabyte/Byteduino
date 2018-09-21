@@ -55,7 +55,7 @@
 
 #ifdef ESP32
 	#define UNIQUE_WEBSOCKET 0
-	#define FEED_WATCHDOG delay(1);
+	#define FEED_WATCHDOG if (watchdogTimer != NULL) {timerWrite(watchdogTimer, 0);}
 	#define RANDOM_REGISTER 0x3FF75144
 	#define GET_CYCLE_COUNT ESP.getCycleCount()
 	#define MAX_MESSAGE_LENGTH 40000

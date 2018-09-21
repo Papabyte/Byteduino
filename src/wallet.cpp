@@ -91,7 +91,6 @@ void saveWalletDefinitionInFlash(const char* wallet,const char* wallet_name, Jso
 			EEPROM.write(WALLETS_CREATED+i, output[i]);
 		}
 		while (output[i]!= 0x00 && i < (WALLETS_CREATED+WALLETS_CREATED_FLASH_SIZE));
-		FEED_WATCHDOG;
 		EEPROM.commit();
 	}else{
 #ifdef DEBUG_PRINT

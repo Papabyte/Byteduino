@@ -3,6 +3,9 @@
 
 #include "signature.h"
 
+#if defined(ESP32)
+extern hw_timer_t * watchdogTimer;
+#endif
 
 bool decodeAndCopyPrivateKey(uint8_t * decodedPrivKey ,const char * privKeyB64){
 

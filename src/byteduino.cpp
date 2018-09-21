@@ -10,7 +10,8 @@ os_timer_t baseTimer;
 #endif
 
 #if defined(ESP32)
-hw_timer_t * timer = NULL;
+hw_timer_t * baseTimer = NULL;
+hw_timer_t * watchdogTimer = NULL;
 #endif
 
 WebSocketsClient webSocketForHub;
@@ -34,6 +35,11 @@ void timerCallback(void * pArg) {
 void IRAM_ATTR timerCallback() {
 	baseTickOccured = true;
 }
+
+void IRAM_ATTR restartDevice() {
+  ESP.restart();
+}
+
 #endif
 
 void setHub(const char * hub){
@@ -92,10 +98,18 @@ void byteduino_init (){
 #endif
 
 #if defined(ESP32)
-	timer = timerBegin(1, 80, true);
-	timerAttachInterrupt(timer, &timerCallback, true);
-	timerAlarmWrite(timer, 1000000, true);
-	timerAlarmEnable(timer);
+	//base timer
+	baseTimer = timerBegin(1, 80, true);
+	timerAttachInterrupt(baseTimer, &timerCallback, true);
+	timerAlarmWrite(baseTimer, 1000000, true);
+	timerAlarmEnable(baseTimer);
+
+	//watchdog timer
+	watchdogTimer = timerBegin(0, 80, true);                  
+	timerAttachInterrupt(watchdogTimer, &restartDevice, true);  
+	timerAlarmWrite(watchdogTimer, 3000 * 1000, false); 
+	timerAlarmEnable(watchdogTimer);
+
 #endif
 
 	EEPROM.begin(TOTAL_USED_FLASH);
@@ -154,7 +168,8 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 }
 
 void byteduino_loop(){
-	
+
+	FEED_WATCHDOG;
 	webSocketForHub.loop();
 	yield();
 #if !UNIQUE_WEBSOCKET
@@ -167,7 +182,7 @@ void byteduino_loop(){
 	if (!byteduino_device.isInitialized && isRandomGeneratorReady()){
 		byteduino_init ();
 	}
-	
+
 	//things we do when device is connected
 	if (byteduino_device.isConnected){
 		treatReceivedPackage();
