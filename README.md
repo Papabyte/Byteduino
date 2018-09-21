@@ -6,6 +6,8 @@
 
 [Byteball](byteball.org) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Byteball into microcontrollers and build cool and original projects.
 
+To get support or discuss about this library, request an invitation to [Byteball Slack](http://slack.byteball.org/) and join #byteduino channel.
+
 #### What can I do with this library?
 
 ##### Encrypted messenging

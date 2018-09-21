@@ -100,6 +100,7 @@ void byteduino_init (){
 
 	EEPROM.begin(TOTAL_USED_FLASH);
 	uECC_set_rng(&getRandomNumbersForUecc);
+	loadPreviousMessengerKeys();
 	byteduino_device.isInitialized = true;
 
 }
@@ -161,6 +162,13 @@ void byteduino_loop(){
 	yield();
 #endif
 
+	updateRandomPool();
+
+	if (!byteduino_device.isInitialized && isRandomGeneratorReady()){
+		byteduino_init ();
+	}
+	
+	//things we do when device is connected
 	if (byteduino_device.isConnected){
 		treatReceivedPackage();
 		treatNewWalletCreation();
@@ -170,6 +178,8 @@ void byteduino_loop(){
 		if (bufferForPackageReceived.hasUnredMessage && bufferForPackageReceived.isFree && !bufferForPackageReceived.isRequestingNewMessage)
 			refreshMessagesFromHub();
 	}
+
+	//things we every second
 	if (baseTickOccured == true) {
 		job2Seconds++;
 		if (job2Seconds == 2){
@@ -177,22 +187,13 @@ void byteduino_loop(){
 				sendHeartbeat();
 				job2Seconds = 0;
 		}
-	if (byteduino_device.messengerKeyRotationTimer > 0)
-		byteduino_device.messengerKeyRotationTimer--;
+
 
     baseTickOccured = false;
 	managePackageSentTimeOut();
+	manageMessengerKey();
 	}
-	
-	updateRandomPool();
 
-	if (!byteduino_device.isInitialized && isRandomGeneratorReady()){
-		byteduino_init ();
-	}
 	
-	if (byteduino_device.messengerKeyRotationTimer == 0 && byteduino_device.isAuthenticated){
-		byteduino_device.messengerKeyRotationTimer = SECONDS_BETWEEN_KEY_ROTATION;
-		setAndSendNewMessengerKey();
-	}
 	
 }

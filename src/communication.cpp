@@ -89,7 +89,7 @@ String getPath(const char * hub){
 	return returnedString;
 }
 
-#if !UNIQUE_WEBSOCKETT
+#if !UNIQUE_WEBSOCKET
 
 void treatResponseFromSecondWebsocket(JsonArray& arr){
 	if (arr[1].is<JsonObject>()) {
@@ -293,7 +293,7 @@ void treatResponseFromHub(JsonArray& arr){
 #endif
 				}else{
 #ifdef DEBUG_PRINT
-			Serial.println(F("wrong tag id for response"));
+					Serial.println(F("wrong tag id for response"));
 #endif
 				}
 		
@@ -340,8 +340,6 @@ void respondToRequestFromHub(JsonArray& arr) {
 
 }
 
-
-//Received: ["justsaying",{"subject":"hub/message_box_status","body":"empty"}]
 void respondToJustSayingFromHub(JsonObject& justSayingObject) {
 
 	const char* subject = justSayingObject["subject"];

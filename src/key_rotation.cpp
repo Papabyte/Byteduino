@@ -27,16 +27,16 @@ void createNewMessengerKeysAndSaveInFlash(){
 		do{
 		}
 		while (!getRandomNumbersForPrivateKey(myMessengerKeys.privateKey, 32));
-		}  while (!uECC_compute_public_key(myMessengerKeys.privateKey, publicKey, uECC_secp256k1()));
+		} while (!uECC_compute_public_key(myMessengerKeys.privateKey, publicKey, uECC_secp256k1()));
 		
 		uECC_compress(publicKey, publicKeyCompressed, uECC_secp256k1());
 	
 		Base64.encode(myMessengerKeys.pubKeyB64, (char *) publicKeyCompressed, 33);
 		for (int i=0;i<32;i++){
-		 EEPROM.write(i + PREVIOUS_PRV_MESSENGER_KEY, myMessengerKeys.privateKey[i]);
+			EEPROM.write(i + PREVIOUS_PRV_MESSENGER_KEY, myMessengerKeys.privateKey[i]);
 		}
 		for (int i=0;i<45;i++){
-		 EEPROM.write(i + PREVIOUS_PUB_MESSENGER_KEY, myMessengerKeys.pubKeyB64[i]);
+			EEPROM.write(i + PREVIOUS_PUB_MESSENGER_KEY, myMessengerKeys.pubKeyB64[i]);
 		}
 		
 	 EEPROM.commit();	
@@ -55,12 +55,24 @@ void loadPreviousMessengerKeys(){
 	
 }
 
+void manageMessengerKey(){
+	if(byteduino_device.isAuthenticated){
+		if (byteduino_device.messengerKeyRotationTimer > 0)
+			byteduino_device.messengerKeyRotationTimer--;
+
+		if (byteduino_device.messengerKeyRotationTimer == 0 && byteduino_device.isAuthenticated){
+			byteduino_device.messengerKeyRotationTimer = SECONDS_BETWEEN_KEY_ROTATION;
+			rotateMessengerKey();
+		}
+
+	}
+}
 
 
-int setAndSendNewMessengerKey() {
+void rotateMessengerKey() {
 	
-	loadPreviousMessengerKeys();
 	createNewMessengerKeysAndSaveInFlash();
+	loadPreviousMessengerKeys();
 
 	uint8_t hash[32];
 	getHashToSignForUpdatingMessengerKey(hash);
@@ -93,7 +105,4 @@ int setAndSendNewMessengerKey() {
 	Serial.println(output);
 #endif
 	webSocketForHub.sendTXT(output);
-
-	return true;
-
 }
