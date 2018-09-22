@@ -71,6 +71,16 @@ void setPrivateKeyM4400(const char * privKeyB64){
 
 void byteduino_init (){
 
+#if defined(ESP32)
+	//watchdog timer
+	watchdogTimer = timerBegin(0, 80, true);                  
+	timerAttachInterrupt(watchdogTimer, &restartDevice, true);  
+	timerAlarmWrite(watchdogTimer, 3000 * 1000, false); 
+	timerAlarmEnable(watchdogTimer);
+	FEED_WATCHDOG;
+#endif
+
+
 	//calculate device pub key
 	getCompressAndEncodePubKey(byteduino_device.keys.privateM1, byteduino_device.keys.publicKeyM1b64);
 	
@@ -90,6 +100,10 @@ void byteduino_init (){
 #if !UNIQUE_WEBSOCKET
 	secondWebSocket.onEvent(secondWebSocketEvent);
 #endif
+	EEPROM.begin(TOTAL_USED_FLASH);
+
+	uECC_set_rng(&getRandomNumbersForUecc);
+	loadPreviousMessengerKeys();
 
 	//set up base timer
 #if defined(ESP8266)
@@ -103,18 +117,11 @@ void byteduino_init (){
 	timerAttachInterrupt(baseTimer, &timerCallback, true);
 	timerAlarmWrite(baseTimer, 1000000, true);
 	timerAlarmEnable(baseTimer);
-
-	//watchdog timer
-	watchdogTimer = timerBegin(0, 80, true);                  
-	timerAttachInterrupt(watchdogTimer, &restartDevice, true);  
-	timerAlarmWrite(watchdogTimer, 3000 * 1000, false); 
-	timerAlarmEnable(watchdogTimer);
-
 #endif
 
-	EEPROM.begin(TOTAL_USED_FLASH);
-	uECC_set_rng(&getRandomNumbersForUecc);
-	loadPreviousMessengerKeys();
+
+	
+
 	byteduino_device.isInitialized = true;
 
 }
