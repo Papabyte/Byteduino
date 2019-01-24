@@ -1,4 +1,4 @@
-##  A very light C/C++ implementation of Byteball for Arduino ESP8266 and ESP32
+##  A very light C/C++ implementation of Obyte for Arduino ESP8266 and ESP32
 
 
 #### Introduction
