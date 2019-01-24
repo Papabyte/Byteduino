@@ -1,31 +1,28 @@
 ##  A very light C/C++ implementation of Byteball for Arduino ESP8266 and ESP32
 
-**Library still at an experimental stage and under heavy development!**
 
 #### Introduction
 
-[Byteball](byteball.org) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Byteball into microcontrollers and build cool and original projects.
+[O<sub>byte</sub>](obyte.org) (formerly Byteball) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Obyte platform into microcontrollers and build cool and original projects.
 
-To get support or discuss about this library, request an invitation to [Byteball Slack](http://slack.byteball.org/) and join #byteduino channel.
+To get support or discuss about this library, request an invitation to [Obyte Slack](http://slack.obyte.org/) and join #byteduino channel.
 
 #### What can I do with this library?
 
+##### Transaction broadcasting
+Beside sending payments, this function allows to post data into the immutable public ledger while proving they existed at time they were posted. These can also be used as inputs for smart-contracts.
+
 ##### Encrypted messenging
 Byteball protocol integrates a communication layer that is used for private chat but also in background to exchange data like smart-contract definitions or private assets history.
-Independently from any posting in DAG, this layer is available on your Byteduino device for your own benefits:
+Independently from any interaction with DAG, this layer is available on your Byteduino device for your own benefits:
 - Deploy state of the art cryptography based on ECDSA signing and AES encryption. You are sure of the identity of your correspondent and protect your communication even from the middle-men.
-- Don't run a server that relays messages, use those from Byteball network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
-- Chat with your device using any GUI Byteball wallet running on macOS, Android, Iphone, Linux or Windows.
-- Write Javascript application on top of an [headless wallet](https://github.com/byteball/headless-byteball) and have it interacting with your device.
+- Don't run a server that relays messages, use those from Obyte network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
+- Chat with your device using any GUI O<sub>byte</sub> wallet running on macOS, Android, Iphone, Linux or Windows.
+- Write Javascript application on top of an [headless wallet](https://github.com/byteball/headless-obyte) and have it interacting with your device.
 
 ##### Transaction cosigning
-On such small device, it will never be possible to implement a full-featured Byteball client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosign.
-after having checked only critical points. This way we ensure that the transaction has been ordered by the Byteduino device although the distant server could have been compromized.
+On such small device, it will never be possible to implement a full-featured O<sub>byte</sub> client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosigns after having checked only critical points. This way we ensure that the transaction has been authorized by the Byteduino device although the distant server could have been compromized.
 The [hardware-cosigner](https://github.com/Papabyte/Hardware-cosigner) used as second factor authentification for a GUI wallet is a practical application of that.
-
-##### Transaction broadcasting
-coming next!
-Beside sending payments, this function will allow to post data into the immutable public ledger while proving they existed at time they were posted.
 
 
 #### Supported hardware
@@ -79,7 +76,7 @@ Copy-paste into your setup() the 3 functions with keys as parameters.
     void setup() {
     
       setDeviceName("Byteduino");
-      setHub("byteball.org/bb-test"); //hub for testnet
+      setHub("obyte.org/bb-test"); //hub for testnet
     
       //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys
       setPrivateKeyM1("lgVGw/OfKKK4NqtK9fmJjbLCkLv7BGLetrdvsKAngWY=");
@@ -131,7 +128,8 @@ Coming soon
 
 ##### Example sketches
 Check example sketches in [examples folder](https://github.com/Papabyte/byteduino/tree/master/examples).
-
+- [send_payment.ino](https://github.com/Papabyte/Byteduino/blob/master/examples/send_payment/send_payment.ino): send a payment in Bytes to an O<sub>byte</sub> address
+- [post_datafeed.ino](https://github.com/Papabyte/Byteduino/blob/master/examples/post_datafeed/post_datafeed.ino): post a datafeed into O<sub>byte</sub> DAG
 - [echo.ino](https://github.com/Papabyte/byteduino/blob/master/examples/echo/echo.ino): send back to sender any text message received
 - [sign_anythin.ino](https://github.com/Papabyte/byteduino/blob/master/examples/sign_anything/sign_anything.ino): cosign any unit received
 
@@ -140,5 +138,5 @@ Check example sketches in [examples folder](https://github.com/Papabyte/byteduin
 - [Hardware cosigner](https://github.com/Papabyte/Hardware-cosigner): hardware cosigner with web interface, compatible with GUI wallet to secure your funds.
 
 #### Go further
-The Byteball platform has rich features like human readable smart-contracts and the potential to solve a lot of issues. To know more about it, it's advised to read the very detailled [whitepaper](https://byteball.org/Byteball.pdf).
+The O<sub>byte</sub> platform has rich features like human readable smart-contracts and the potential to solve a lot of issues. To know more about it, it's advised to read the very detailled [whitepaper](https://obyte.org/Byteball.pdf).
 
