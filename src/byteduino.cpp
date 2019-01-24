@@ -25,6 +25,7 @@ bufferPackageReceived bufferForPackageReceived;
 bufferPackageSent bufferForPackageSent;
 Byteduino byteduino_device; 
 
+
 #if defined(ESP8266)
 void timerCallback(void * pArg) {
 	baseTickOccured = true;
@@ -48,6 +49,10 @@ void setHub(const char * hub){
 	}
 }
 
+void setTestNet(){
+	byteduino_device.isTestNet = true;
+}
+
 void setDeviceName(const char * deviceName){
 	if(strlen(deviceName) < MAX_DEVICE_NAME_STRING_SIZE){
 		strcpy(byteduino_device.deviceName, deviceName);
@@ -68,16 +73,20 @@ void setPrivateKeyM4400(const char * privKeyB64){
 	decodeAndCopyPrivateKey(byteduino_device.keys.privateM4400, privKeyB64);
 }
 
+bool isDeviceConnectedToHub(){
+	return byteduino_device.isConnected;
+}
+
 
 void byteduino_init (){
 
 #if defined(ESP32)
 	//watchdog timer
-	watchdogTimer = timerBegin(0, 80, true);                  
+	watchdogTimer = timerBegin(0, 80, true);
+	timerWrite(watchdogTimer, 0);
 	timerAttachInterrupt(watchdogTimer, &restartDevice, true);  
-	timerAlarmWrite(watchdogTimer, 3000 * 1000, false); 
+	timerAlarmWrite(watchdogTimer, 6000 * 1000, false); 
 	timerAlarmEnable(watchdogTimer);
-	FEED_WATCHDOG;
 #endif
 
 
@@ -90,13 +99,17 @@ void byteduino_init (){
 	//determine device address
 	getDeviceAddress(byteduino_device.keys.publicKeyM1b64, byteduino_device.deviceAddress);
 	
+	//determine funding address
+	getPaymentAddressFromPubKey(byteduino_device.keys.publicKeyM4400b64, byteduino_device.fundingAddress);
+
 	//send device infos to serial
 	printDeviceInfos();
 	
 	//start websocket
 	webSocketForHub.beginSSL(getDomain(byteduino_device.hub), byteduino_device.port, getPath(byteduino_device.hub));
 	webSocketForHub.onEvent(webSocketEvent);
-	
+	FEED_WATCHDOG;
+
 #if !UNIQUE_WEBSOCKET
 	secondWebSocket.onEvent(secondWebSocketEvent);
 #endif
@@ -119,9 +132,6 @@ void byteduino_init (){
 	timerAlarmEnable(baseTimer);
 #endif
 
-
-	
-
 	byteduino_device.isInitialized = true;
 
 }
@@ -138,6 +148,9 @@ void printDeviceInfos(){
 	Serial.println("#0000");
 	Serial.println("Extended Pub Key:");
 	Serial.println(byteduino_device.keys.extPubKey);
+	Serial.println("Funding address:");
+	Serial.println(byteduino_device.fundingAddress);
+	
 }
 
 
@@ -196,12 +209,13 @@ void byteduino_loop(){
 		treatNewWalletCreation();
 		treatWaitingSignature();
 		treatSentPackage();
+		treatPaymentComposition();
 
 		if (bufferForPackageReceived.hasUnredMessage && bufferForPackageReceived.isFree && !bufferForPackageReceived.isRequestingNewMessage)
 			refreshMessagesFromHub();
 	}
 
-	//things we every second
+	//things we do every second
 	if (baseTickOccured == true) {
 		job2Seconds++;
 		if (job2Seconds == 2){
@@ -210,9 +224,9 @@ void byteduino_loop(){
 				job2Seconds = 0;
 		}
 
-
-    baseTickOccured = false;
+	baseTickOccured = false;
 	managePackageSentTimeOut();
+	managePaymentCompositionTimeOut();
 	manageMessengerKey();
 	}
 

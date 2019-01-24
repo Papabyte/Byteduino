@@ -35,7 +35,10 @@
 #define _WALLET_H_
 #include "wallet.h"
 #endif
-
+#ifndef _PAYMENT_H_
+#define _PAYMENT_H_
+#include "payment.h"
+#endif
 
 #include "EEPROM.h"
 #include "Arduino.h"
@@ -43,7 +46,7 @@
 #include "libs/Base64.h"
 #include "random_gen.h"
 
-//#define DEBUG_PRINT
+#define DEBUG_PRINT
 //#define REMOVE_COSIGNING
 
 void byteduino_init ();
@@ -58,3 +61,5 @@ void setExtPubKey(const char * extPubKey);
 void setPrivateKeyM1(const char * privKeyB64);
 void setPrivateKeyM4400(const char * privKeyB64);
 void printDeviceInfos();
+void setTestNet();
+bool isDeviceConnectedToHub();

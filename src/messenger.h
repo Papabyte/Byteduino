@@ -11,11 +11,6 @@
 #include "libs/AES.h"
 
 
-
-//#include "Crypto.h"
-
-
-
 void treatReceivedMessage(JsonObject& messageBody);
 bool checkMessageBodyStructure(JsonObject& messageBody);
 bool checkEncryptedPackageStructure(JsonObject& encryptedPackage);

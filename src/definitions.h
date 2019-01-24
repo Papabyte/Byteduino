@@ -2,6 +2,10 @@
 #define HEARTBEAT "-1"
 #define UPDATE_MESSENGER_KEY "-2"
 #define GET_RECIPIENT_KEY "-3"
+#define GET_ADDRESS_DEFINITION "-4"
+#define GET_INPUTS_FOR_AMOUNT "-5"
+#define GET_PARENTS_BALL_WITNESSES "-6"
+#define POST_JOINT "-7"
 
 //string sizes
 #define TAG_LENGTH 10
@@ -9,9 +13,10 @@
 #define MAX_HUB_STRING_SIZE 30
 #define MAX_DEVICE_NAME_STRING_SIZE 25
 #define MAX_PAIRING_SECRET_STRING_SIZE 25
+#define MAX_DATA_SIZE 100
 
 //objects
-#define MAX_KEYS_COUNT 8
+#define MAX_KEYS_COUNT 12
 #define MAX_KEY_SIZE 30
 
 //Flash map
@@ -38,6 +43,7 @@
 
 //timeout
 #define REQUEST_KEY_TIME_OUT 4
+#define SEND_PAYMENT_TIME_OUT 8
 
 //device specific
 #ifdef ESP8266
@@ -51,6 +57,7 @@
 	#define JSON_BUFFER_SIZE_FOR_RECEIVED_PACKAGE 6500
 	#define RECEIVED_PACKAGE_BUFFER_SIZE 7000
 	#define RANDOM_POOL_TICKER_RESET 1600
+	#define MAX_DATA_FEED_JSON_SIZE 200
 #endif
 
 #ifdef ESP32
@@ -64,11 +71,24 @@
 	#define JSON_BUFFER_SIZE_FOR_RECEIVED_PACKAGE 30000
 	#define RECEIVED_PACKAGE_BUFFER_SIZE 31000
 	#define RANDOM_POOL_TICKER_RESET 700
+	#define MAX_DATA_FEED_JSON_SIZE 2000
 #endif
 
-//return codes
+//error codes
 #define SUCCESS 0
 #define TEXT_TOO_LONG 1
 #define WRONG_PUBKEY_SIZE 2
 #define HUB_URL_TOO_LONG 3
 #define BUFFER_NOT_FREE 4
+#define DATA_FEED_TOO_LONG 5
+#define NOT_ENOUGH_FUNDS 6
+#define TIMEOUT_PAYMENT_NOT_ACKNOWLEDGED 7
+#define TIMEOUT_PAYMENT_NOT_SENT 8
+#define PAYMENT_ACKNOWLEDGED 9
+#define PAYMENT_REFUSED 10
+
+//network version
+#define MAIN_NET_VERSION "1.0"
+#define MAIN_NET_ALT "1"
+#define TEST_NET_VERSION "1.0t"
+#define TEST_NET_ALT "2"

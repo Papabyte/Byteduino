@@ -121,7 +121,7 @@ Device name: Byteduino
 Pairing code: ArxPWIrgUvi5YuvugpJEE1aLwu9bRBOxoRFHSX9o6IyJ@byteball.org/bb-test#0000
 Extended Pub Key:
 xpub6Chxqf8hRQoLRJFS8mhFCDv5yzUNC7rhhh36qqqt1WtAZcmCNhS5pPndqhx8RmgwFhGPa9FYq3iTXNBkYdkrAKJxa7qnahnAvCzKW5dnfJn
-Wss connected to: /bb-test
+Wss connected to: /bb
 Authenticated by hub
 ```
 To get verbose serial output, add `#define DEBUG_PRINT` to your byteduino.h.

@@ -6,6 +6,7 @@
 
 bool firstKey;
 
+
 bool getBase64HashForJsonObject (char* hashB64, JsonObject& object){
 	uint8_t hash[32];
 	if (!getSHA256ForJsonObject(hash,object))
@@ -58,26 +59,32 @@ void getRipeMD160ForString(uint8_t hash[20] , const char * string, size_t length
 }
 
 
-void getRipeMD160ForObject(uint8_t hash[20] ,JsonObject& object){
+void getRipeMD160ForArray(uint8_t hash[20] ,JsonArray& object){
 	ripemd160_ctx* hasher = new ripemd160_ctx;
-	firstKey = true;
+	firstKey = false;
+
 	rhash_ripemd160_init(hasher);
-	updateHashForObject<ripemd160_ctx*>(hasher, object);
+	updateHashForArray<ripemd160_ctx*>(hasher, object, true);
 	rhash_ripemd160_final(hasher,hash);
 	delete hasher;
 }
 
 
 
-template <class T> bool updateHashForArray (T hasher, JsonArray& array) {
+template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isFirst) {
 
 	size_t arraySize = array.size();
+	if (isFirst){
 #ifdef DEBUG_HASHING
-	Serial.println("$[");
+		Serial.println("[");
 #endif
-
-	updateHash(hasher,"\0[",2);
-	
+		updateHash(hasher,"[",1);
+	}else{
+#ifdef DEBUG_HASHING
+		Serial.println("$[");
+#endif
+		updateHash(hasher,"\0[",2);
+	}
 	//we hash keys and values by chunks 
 	for (int i = 0; i < arraySize;i++){
 
@@ -89,7 +96,7 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array) {
 		
 		if (array[i].is<JsonArray>()){
 			JsonArray& subArray = array[i];
-			if (!updateHashForArray<T>(hasher, subArray))
+			if (!updateHashForArray<T>(hasher, subArray, false))
 				return false;
 		}
 		
@@ -183,7 +190,7 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object) {
 			updateHash(hasher,key,strlen(key));
 			
 			JsonArray& subArray = object[key];
-			if (!updateHashForArray<T>(hasher, subArray))
+			if (!updateHashForArray<T>(hasher, subArray, false))
 				return false;
 		}
 		
@@ -280,23 +287,32 @@ void getChecksum(char hash160[20], uint8_t checksum[]){
 
 void getDeviceAddress(const char * pubkey, char deviceAddress[34]){
 	char chash[33];
-	getChash160<const char *>(pubkey, chash);
+	getChash160ForString(pubkey, chash);
 	deviceAddress[0] = 0x30;
 	memcpy(deviceAddress+1, chash,33);
 }
 
 
-template <class T> void getChash160 (T input, char chash[33]) {
-
+void getChash160ForString (const char * input, char chash[33]) {
 	uint8_t hash160[20];
 	getRipeMD160ForString(hash160, input, strlen(input));
-	
-	uint8_t checksum[4];
-	getChecksum((char *) hash160,checksum);
+	getChash160 (hash160, chash);
+}
+
+void getChash160ForArray (JsonArray& input, char chash[33]) {
+	uint8_t hash160[20];
+	getRipeMD160ForArray(hash160, input);
+	getChash160 (hash160, chash);
+}
+
+void getChash160 (uint8_t * hash160, char chash[33]){
 
 	bool checksumBin [32];
 	bool hash160Bin [128];
 	bool checksumedHashBin [160];
+
+	uint8_t checksum[4];
+	getChecksum((char *) hash160,checksum);
 
 	//convert checksum bytes to bin
 	for (int i = 0; i < 4;i++) {
