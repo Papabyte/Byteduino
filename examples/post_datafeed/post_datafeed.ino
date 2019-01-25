@@ -43,7 +43,7 @@ void onPaymentResult(const int id, const int result_code, const char * unit_hash
 void setup() {
 
   setDeviceName("Byteduino");
-  setHub("obyte.org/bb"); //main hub
+  setHub("obyte.org/bb"); //main net hub
   //setTestNet(); //uncomment this to switch to testnet
 
   //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys

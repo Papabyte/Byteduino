@@ -41,7 +41,7 @@ void onTxtMessageReceived(const char* senderPubKey, const char* senderHub, const
 void setup() {
 
   setDeviceName("Byteduino");
-  setHub("byteball.org/bb");
+  setHub("obyte.org/bb");
 
   //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys
   setPrivateKeyM1("lgVGw/OfKKK4NqtK9fmJjbLCkLv7BGLetrdvsKAngWY=");

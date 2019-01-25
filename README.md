@@ -1,27 +1,28 @@
-##  A very light C/C++ implementation of Obyte for Arduino ESP8266 and ESP32
+##  A very light C/C++ implementation of O<sub>byte</sub> for Arduino ESP8266 and ESP32
 
 
 #### Introduction
 
 [O<sub>byte</sub>](obyte.org) (formerly Byteball) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Obyte platform into microcontrollers and build cool and original projects.
 
-To get support or discuss about this library, request an invitation to [Obyte Slack](http://slack.obyte.org/) and join #byteduino channel.
+To get support or discuss about this library, request an invitation to [O<sub>byte</sub> Slack](http://slack.obyte.org/) and join #byteduino channel.
 
 #### What can I do with this library?
 
 ##### Transaction broadcasting
+The device has its own O<sub>byte</sub> address and can send payments to other addresses. 
 Beside sending payments, this function allows to post data into the immutable public ledger while proving they existed at time they were posted. These can also be used as inputs for smart-contracts.
 
 ##### Encrypted messenging
 Byteball protocol integrates a communication layer that is used for private chat but also in background to exchange data like smart-contract definitions or private assets history.
-Independently from any interaction with DAG, this layer is available on your Byteduino device for your own benefits:
+Independently from any interaction with DAG, this layer is available for your own benefits:
 - Deploy state of the art cryptography based on ECDSA signing and AES encryption. You are sure of the identity of your correspondent and protect your communication even from the middle-men.
-- Don't run a server that relays messages, use those from Obyte network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
+- Don't run a server that relays messages, use those from O<sub>byte</sub> network. Your devices can always communicate without specific network configuration as long as they are connected to internet.
 - Chat with your device using any GUI O<sub>byte</sub> wallet running on macOS, Android, Iphone, Linux or Windows.
 - Write Javascript application on top of an [headless wallet](https://github.com/byteball/headless-obyte) and have it interacting with your device.
 
 ##### Transaction cosigning
-On such small device, it will never be possible to implement a full-featured O<sub>byte</sub> client. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosigns after having checked only critical points. This way we ensure that the transaction has been authorized by the Byteduino device although the distant server could have been compromized.
+On such small device, it's not possible to implement all O<sub>byte</sub> features. But when needed, it's possible to delegate work to a distant server by charging it to prepare transactions that the device cosigns after having checked only critical points. This way we ensure that the transaction has been authorized by the Byteduino device although the distant server could have been compromized.
 The [hardware-cosigner](https://github.com/Papabyte/Hardware-cosigner) used as second factor authentification for a GUI wallet is a practical application of that.
 
 
@@ -76,8 +77,8 @@ Copy-paste into your setup() the 3 functions with keys as parameters.
     void setup() {
     
       setDeviceName("Byteduino");
-      setHub("obyte.org/bb-test"); //hub for testnet
-    
+      setHub("obyte.org/bb"); 
+
       //don't forget to change the keys below, you will get troubles if more than 1 device is connected using the same keys
       setPrivateKeyM1("lgVGw/OfKKK4NqtK9fmJjbLCkLv7BGLetrdvsKAngWY=");
       setExtPubKey("xpub6Chxqf8hRQoLRJFS8mhFCDv5yzUNC7rhhh36qqqt1WtAZcmCNhS5pPndqhx8RmgwFhGPa9FYq3iTXNBkYdkrAKJxa7qnahnAvCzKW5dnfJn");
@@ -111,16 +112,21 @@ By default the device will acknowledge any pairing or wallet creation request (*
 
 The serial monitor should return this:
 ```
-Not connected to wifi yet
-Not connected to wifi yet
-Device address: 06XOQ6ZVWTV2ZWAEAIPFPJRGGQBMTHC6J
-Device name: Byteduino
-Pairing code: ArxPWIrgUvi5YuvugpJEE1aLwu9bRBOxoRFHSX9o6IyJ@byteball.org/bb-test#0000
+Device address: 
+06XOQ6ZVWTV2ZWAEAIPFPJRGGQBMTHC6J
+Device name: 
+Byteduino
+Pairing code: 
+ArxPWIrgUvi5YuvugpJEE1aLwu9bRBOxoRFHSX9o6IyJ@obyte.org/bb#0000
 Extended Pub Key:
 xpub6Chxqf8hRQoLRJFS8mhFCDv5yzUNC7rhhh36qqqt1WtAZcmCNhS5pPndqhx8RmgwFhGPa9FYq3iTXNBkYdkrAKJxa7qnahnAvCzKW5dnfJn
+Funding address:
+BJOOCXIZBKBDDDOBIAH46DY5UR7LVKTA
 Wss connected to: /bb
-Authenticated by hub
 ```
+Use the pairing code to pair a GUI wallet with your device.
+Use the funding address to send Bytes to your device, for reference around 1500 bytes are required to post one datafeed.
+
 To get verbose serial output, add `#define DEBUG_PRINT` to your byteduino.h.
 
 ##### Functions references
@@ -139,4 +145,5 @@ Check example sketches in [examples folder](https://github.com/Papabyte/byteduin
 
 #### Go further
 The O<sub>byte</sub> platform has rich features like human readable smart-contracts and the potential to solve a lot of issues. To know more about it, it's advised to read the very detailled [whitepaper](https://obyte.org/Byteball.pdf).
+More features could be implemented in this library: payment in assets, deterministic wallet, smart-contracts... Don't hesitate to contact us if you need a specific feature for your project. 
 
