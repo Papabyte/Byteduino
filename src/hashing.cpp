@@ -4,8 +4,6 @@
 
 //#define DEBUG_HASHING
 
-bool firstKey;
-
 
 bool getBase64HashForJsonObject (char* hashB64, JsonObject& object){
 	uint8_t hash[32];
@@ -15,21 +13,9 @@ bool getBase64HashForJsonObject (char* hashB64, JsonObject& object){
 	return true;
 }
 
-
-void updateHash (SHA256& hasher,const char * string, size_t length) {
-	hasher.update(string,length);
-}
-
-void updateHash (ripemd160_ctx* hasher,const char * string, size_t length) {
-	rhash_ripemd160_update(hasher,(const unsigned char*)string,length);
-}
-
-
 bool getSHA256ForJsonObject(uint8_t hash[32] ,JsonObject& object){
-	
 	SHA256 hasher;
-	firstKey = true;
-	if (!updateHashForObject<SHA256&>(hasher, object)){
+	if (!updateHashForObject<SHA256&>(hasher, object, true)){
 #ifdef DEBUG_PRINT
 		Serial.println(F("Error while hashing object"));
 #endif
@@ -40,14 +26,10 @@ bool getSHA256ForJsonObject(uint8_t hash[32] ,JsonObject& object){
 }
 
 void getSHA256(uint8_t *hash ,const char * string, size_t inputLength, size_t outputLength){
-	
 	SHA256 hasher;
 	updateHash (hasher,string, inputLength);
 	hasher.finalize(hash,outputLength);
-
 }
-
-
 
 void getRipeMD160ForString(uint8_t hash[20] , const char * string, size_t length){
 	ripemd160_ctx* hasher = new ripemd160_ctx;
@@ -58,22 +40,26 @@ void getRipeMD160ForString(uint8_t hash[20] , const char * string, size_t length
 	delete hasher;
 }
 
-
 void getRipeMD160ForArray(uint8_t hash[20] ,JsonArray& object){
 	ripemd160_ctx* hasher = new ripemd160_ctx;
-	firstKey = false;
-
 	rhash_ripemd160_init(hasher);
 	updateHashForArray<ripemd160_ctx*>(hasher, object, true);
 	rhash_ripemd160_final(hasher,hash);
 	delete hasher;
 }
 
+void updateHash (SHA256& hasher,const char * string, size_t length) {
+	hasher.update(string,length);
+}
 
+void updateHash (ripemd160_ctx* hasher,const char * string, size_t length) {
+	rhash_ripemd160_update(hasher,(const unsigned char*)string,length);
+}
 
 template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isFirst) {
-
 	size_t arraySize = array.size();
+	if (arraySize == 0) //empty array not accepted
+		return false;
 	if (isFirst){
 #ifdef DEBUG_HASHING
 		Serial.println("[");
@@ -87,33 +73,22 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 	}
 	//we hash keys and values by chunks 
 	for (int i = 0; i < arraySize;i++){
-
 		if (array[i].is<JsonObject>()){
 			JsonObject& subObject = array[i];
-			if (!updateHashForObject<T>(hasher, subObject))
+			if (!updateHashForObject<T>(hasher, subObject, false))
 				return false;
-		}
-		
-		if (array[i].is<JsonArray>()){
+		} else if (array[i].is<JsonArray>()){
 			JsonArray& subArray = array[i];
 			if (!updateHashForArray<T>(hasher, subArray, false))
 				return false;
+		} else if (array[i].is<char*>()){
+			const char* charToHash = array[i];
+			updateHashForChar<T>(hasher, charToHash);
+		} else if (array[i].is<int>()){
+			int integer = array[i];
+			updateHashForInteger<T>(hasher, integer);
 		}
-		
-		
-		if (array[i].is<char*>()){
-			const char* string = array[i];
-#ifdef DEBUG_HASHING
-			Serial.println("$s$");
-#endif
-
-			updateHash(hasher,"\0s\0",3);
-#ifdef DEBUG_HASHING
-			Serial.println(string);
-#endif
-			updateHash(hasher,string,strlen(string));
-		}
-		
+		isFirst = false;
 	}
 #ifdef DEBUG_HASHING
 	Serial.println("$]");
@@ -122,9 +97,32 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 	return true;
 }
 
+template <class T> bool updateHashForChar (T hasher, const char * charToHash){
+#ifdef DEBUG_HASHING
+	Serial.println("$s$");
+#endif
+	updateHash(hasher,"\0s\0",3);
+#ifdef DEBUG_HASHING
+	Serial.println(charToHash);
+#endif
+	updateHash(hasher,charToHash,strlen(charToHash));
+}
 
+template <class T> bool updateHashForInteger (T hasher, const int integer){
+	char str[16];
+	sprintf(str, "%d", integer);
 
-template <class T> bool updateHashForObject (T hasher, JsonObject& object) {
+#ifdef DEBUG_HASHING
+		Serial.println("$n$");
+#endif
+		updateHash(hasher,"\0n\0",3);
+#ifdef DEBUG_HASHING
+		Serial.println(str);
+#endif
+		updateHash(hasher,str,strlen(str));
+} 
+
+template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool isFirst) {
 
 	char sortedKeys[MAX_KEYS_COUNT][MAX_KEY_SIZE];
 	int numberOfKeysSorted = 0;
@@ -149,114 +147,62 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object) {
 		}
 		numberOfKeysSorted++;
 	}
+	if (numberOfKeysSorted == 0) //empty object not accepted
+		return false;
 
-	
 	//we hash keys and values by chunks 
+
 	for (int i = 0; i < numberOfKeysSorted;i++){
-		const char* key = sortedKeys[i];
-		if (object[key].is<JsonObject>()){
-			
-			if (!firstKey){
+		if (!isFirst){
 #ifdef DEBUG_HASHING
-				Serial.println("$");
+			Serial.println("$");
 #endif
-				updateHash(hasher,"\0",1);
-			}
-			firstKey = false;
+			updateHash(hasher,"\0",1);
+		}
+			const char* key = sortedKeys[i];
+		if (object[key].is<JsonObject>()){
+
 #ifdef DEBUG_HASHING
 			Serial.println(key);
 #endif
-
 			updateHash(hasher,key,strlen(key));
 
 			JsonObject& subObject = object[key];
-			if (!updateHashForObject<T>(hasher, subObject))
+			if (!updateHashForObject<T>(hasher, subObject, false))
 				return false;
-		}
-				
-		if (object[key].is<JsonArray>()){
+		} else if (object[key].is<JsonArray>()){
 			
-			if (!firstKey){
-#ifdef DEBUG_HASHING
-				Serial.println("$");
-#endif
-				updateHash(hasher,"\0",1);
-			}
-
-			firstKey = false;
 #ifdef DEBUG_HASHING
 			Serial.println(key);
 #endif
 			updateHash(hasher,key,strlen(key));
-			
 			JsonArray& subArray = object[key];
 			if (!updateHashForArray<T>(hasher, subArray, false))
 				return false;
-		}
-		
-		
-		if (object[key].is<int>()){
-			int integer = object[key];;
-			char str[16];
-			sprintf(str, "%d", integer);
-
-			if (!firstKey){
-#ifdef DEBUG_HASHING
-				Serial.println("$");
-#endif
-				updateHash(hasher,"\0",1);
-			}
-
-			firstKey = false;
+		} else if (object[key].is<int>()){
+			int integer = object[key];
 #ifdef DEBUG_HASHING
 			Serial.println(key);
 #endif
 			updateHash(hasher,key,strlen(key));
-#ifdef DEBUG_HASHING
-			Serial.println("$n$");
-#endif
-			updateHash(hasher,"\0n\0",3);
-#ifdef DEBUG_HASHING
-			Serial.println(str);
-#endif
-			updateHash(hasher,str,strlen(str));
+			updateHashForInteger<T>(hasher, integer);
 
-		}
-		
-		
-		
-		if (object[key].is<char*>()){
-			const char* string = object[sortedKeys[i]];
-
-			if (!firstKey){
-#ifdef DEBUG_HASHING
-				Serial.println("$");
-#endif
-				updateHash(hasher,"\0",1);
-			}
-
-			firstKey = false;
+		} else if (object[key].is<char*>()){
+			const char* charToHash = object[sortedKeys[i]];
 #ifdef DEBUG_HASHING
 			Serial.println(key);
 #endif
-
 			updateHash(hasher,key,strlen(key));
-#ifdef DEBUG_HASHING
-			Serial.println("$s$");
-#endif
-			updateHash(hasher,"\0s\0",3);
-#ifdef DEBUG_HASHING
-			Serial.println(string);
-#endif
-			updateHash(hasher,string,strlen(string));
-
+			updateHashForChar<T>(hasher, charToHash);
+		} else {
+			return false;
 		}
-
+		isFirst = false;
 	}
-
-
 	return true;
 }
+
+
 
 //compare alphabetic order
 bool isChar1BeforeChar2(const char* char1, const char* char2){
@@ -269,20 +215,17 @@ bool isChar1BeforeChar2(const char* char1, const char* char2){
 		} else if (char1[i]>char2[i]){
 			return false;
 		}
-		
 	}
 	return true;
 }
 
 void getChecksum(char hash160[20], uint8_t checksum[]){
-
 	uint8_t hashSHA256[32];
 	getSHA256(hashSHA256, &hash160[4],16,32);
 	checksum[0] = hashSHA256[5];
 	checksum[1] = hashSHA256[13];
 	checksum[2] = hashSHA256[21];
 	checksum[3] = hashSHA256[29];
-	
 }
 
 void getDeviceAddress(const char * pubkey, char deviceAddress[34]){
