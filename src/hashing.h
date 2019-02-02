@@ -27,4 +27,5 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 template <class T> bool updateHashForInteger (T hasher, const int number);
 template <class T> bool updateHashForChar (T hasher, const char * charToHash);
 bool isChar1BeforeChar2(const char* char1, const char* char2);
-
+bool isValidChash160(const char * chash);
+byte binArrayToByte (const bool binArray[8]);

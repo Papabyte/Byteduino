@@ -4,6 +4,9 @@
 
 //#define DEBUG_HASHING
 
+const byte offsets[] = {1,5,6,11,20,22,28,33,36,41,49,58,65,74,77,79,82,90,94,100,102,108,112,115,118,126,129,131,138,147,152,154};
+const char base32Chars [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
 
 bool getBase64HashForJsonObject (char* hashB64, JsonObject& object){
 	uint8_t hash[32];
@@ -270,9 +273,8 @@ void getChash160 (uint8_t * hash160, char chash[33]){
 			hash160Bin[i*8+j] = (hash160[i+4] << j) & 0x80;
 		}
 	}
-	
+
 	//mixChecksumIntoCleanData
-	const byte offsets[] = {1,5,6,11,20,22,28,33,36,41,49,58,65,74,77,79,82,90,94,100,102,108,112,115,118,126,129,131,138,147,152,154};
 	byte indexOffset = 0;
 	for (byte i = 0 ;i<160;i++){
 		if (i == offsets[indexOffset]){
@@ -285,7 +287,6 @@ void getChash160 (uint8_t * hash160, char chash[33]){
 	}
 
 	//convert bin checksumed hash to base32
-	char base32Chars [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 	int index =0;
 	for (int i = 0; i<32;i++){
 		index = checksumedHashBin[i*5] * 16 + checksumedHashBin[i*5+1] * 8 + checksumedHashBin[i*5+2] * 4 + checksumedHashBin[i*5+3] * 2  + checksumedHashBin[i*5+4];
@@ -294,3 +295,61 @@ void getChash160 (uint8_t * hash160, char chash[33]){
 	chash[32]=0;
 }
 
+bool isValidChash160(const char * chash){
+
+	if (strlen(chash) != 32){
+#ifdef DEBUG_PRINT
+		Serial.println(F("chash is not 32 length"));
+#endif
+		return false;
+	}
+
+	bool checksumBin [32];
+	bool checksumedHashBin [160];
+	bool hash160Bin [128];
+
+	//convert base32 to bin
+	char * pch;
+	byte value = 0;
+	for (byte i = 0; i<32; i++){
+		pch = strchr(base32Chars, chash[i]);
+		value = pch - base32Chars;
+		for (byte j=5; j>0;j--){
+			checksumedHashBin[i*5+j-1] = value & 1;
+			value /=2;
+		}
+	}
+
+	//unmix data
+	byte indexOffset = 0;
+	for (byte i = 0; i<160; i++){
+		if (i == offsets[indexOffset]){
+			checksumBin[indexOffset] = checksumedHashBin[i];
+			indexOffset++;
+
+		} else {
+			hash160Bin[i-indexOffset] = checksumedHashBin[i];
+		}
+	}
+
+	uint8_t hash160[20];
+	//convert bin to byte
+	for (int i = 0; i < 16;i++) {
+		hash160[i+4] = binArrayToByte(&hash160Bin[i*8]);
+	}
+
+	uint8_t calculatedChecksum[4];
+	getChecksum((char *) hash160,calculatedChecksum);
+
+	//compare checksums
+	for (int i = 0; i < 4;i++) {
+		if (calculatedChecksum[i] != binArrayToByte(&checksumBin[i*8]))
+			return false;
+	}
+	return true;
+}
+
+byte binArrayToByte (const bool binArray[8]){
+	return binArray[0] * 128 + binArray[1] * 64 + binArray[2] * 32 + binArray[3] * 16 + binArray[4] * 8 
+		+ binArray[5] * 4 + binArray[6] * 2  + binArray[7];
+}

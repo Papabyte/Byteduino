@@ -16,35 +16,40 @@ void setCbPaymentResult(cbPaymentResult cbToSet){
 }
 
 int loadBufferPayment(const int amount, const bool hasDataFeed, JsonObject & dataFeed, const char * recipientAddress, const int id){
-	if(bufferPayment.isFree){
-		if (MAX_DATA_FEED_JSON_SIZE >= dataFeed.measureLength()){
-			bufferPayment.isFree = false;
-			bufferPayment.id = id;
-			bufferPayment.amount = amount;
-			memcpy(bufferPayment.recipientAddress, recipientAddress,33);
-			bufferPayment.arePropsReceived = false;
-			bufferPayment.isDefinitionReceived = false;
-			bufferPayment.requireDefinition = false;
-			bufferPayment.areInputsRequested = false;
-			strcpy(bufferPayment.unit,"");
-			bufferPayment.isPosted = false;
-			dataFeed.printTo(bufferPayment.dataFeedJson);
-			bufferPayment.hasDataFeed = hasDataFeed;
-			bufferPayment.timeOut = SEND_PAYMENT_TIME_OUT;
-			requestDefinition(byteduino_device.fundingAddress);
-			getParentsAndLastBallAndWitnesses();
-		} else {
-#ifdef DEBUG_PRINT
-			Serial.println(F("data feed size exceeds maximum allowed"));
-#endif
-			return DATA_FEED_TOO_LONG;
-		}
-	} else {
+	if(!bufferPayment.isFree){
 #ifdef DEBUG_PRINT
 		Serial.println(F("Buffer not free to send payment"));
 #endif
 		return BUFFER_NOT_FREE;
+	} 
+	if (!isValidChash160(recipientAddress)){
+#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient address is not valid"));
+#endif
+		return ADDRESS_NOT_VALID;
 	}
+	if (MAX_DATA_FEED_JSON_SIZE < dataFeed.measureLength()){
+#ifdef DEBUG_PRINT
+		Serial.println(F("data feed size exceeds maximum allowed"));
+#endif
+		return DATA_FEED_TOO_LONG;
+	}
+
+	bufferPayment.isFree = false;
+	bufferPayment.id = id;
+	bufferPayment.amount = amount;
+	memcpy(bufferPayment.recipientAddress, recipientAddress,33);
+	bufferPayment.arePropsReceived = false;
+	bufferPayment.isDefinitionReceived = false;
+	bufferPayment.requireDefinition = false;
+	bufferPayment.areInputsRequested = false;
+	strcpy(bufferPayment.unit,"");
+	bufferPayment.isPosted = false;
+	dataFeed.printTo(bufferPayment.dataFeedJson);
+	bufferPayment.hasDataFeed = hasDataFeed;
+	bufferPayment.timeOut = SEND_PAYMENT_TIME_OUT;
+	requestDefinition(byteduino_device.fundingAddress);
+	getParentsAndLastBallAndWitnesses();
 	return SUCCESS;
 }
 
@@ -531,5 +536,5 @@ void getPaymentAddressFromPubKey(const char * pubKey, char * paymentAddress) {
 	objSig["pubkey"] = pubKey;
 	mainArray.add("sig");
 	mainArray.add(objSig);
-	getChash160ForArray (mainArray,paymentAddress);
+	getChash160ForArray (mainArray, paymentAddress);
 }
