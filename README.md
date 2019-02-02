@@ -5,7 +5,7 @@
 
 [O<sub>byte</sub>](obyte.org) (formerly Byteball) is a last generation crypto currency using a Directed Acyclic Graph (DAG) instead of a blockchain like Bitcoin and its clones do. Brillantly designed, it offers a lot of features without suffering from complexity which makes it a great platform for IoT devices. This library is made to help hobbyists and professionals to implement Obyte platform into microcontrollers and build cool and original projects.
 
-To get support or discuss about this library, request an invitation to [O<sub>byte</sub> Slack](http://slack.obyte.org/) and join #byteduino channel.
+To get support or discuss about this library, connect to [O<sub>byte</sub> Discord](http://discord.obyte.org/) and join #byteduino channel.
 
 #### What can I do with this library?
 
