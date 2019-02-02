@@ -18,4 +18,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount);
 void handlePostJointResponse(JsonObject& receivedObject, const char * tag);
 int loadBufferPayment(const int amount, const bool hasDatafeed, const char * dataFeed, const char * recipientAddress, const int id);
 int postDataFeed(const char * key, const char * value, const int id);
+void handleBalanceResponse(JsonObject& receivedObject);
 void setCbPaymentResult(cbPaymentResult cbToSet);
+void setCbBalancesReceived(cbBalancesReceived cbToSet);
+void getAvailableBalances();

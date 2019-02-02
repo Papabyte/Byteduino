@@ -6,6 +6,7 @@
 #define GET_INPUTS_FOR_AMOUNT "-5"
 #define GET_PARENTS_BALL_WITNESSES "-6"
 #define POST_JOINT "-7"
+#define GET_BALANCE "-8"
 
 //string sizes
 #define TAG_LENGTH 10
@@ -86,6 +87,7 @@
 #define TIMEOUT_PAYMENT_NOT_SENT 8
 #define PAYMENT_ACKNOWLEDGED 9
 #define PAYMENT_REFUSED 10
+#define ADDRESS_NOT_VALID 11
 
 //network version
 #define MAIN_NET_VERSION "1.0"

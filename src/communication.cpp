@@ -311,6 +311,11 @@ void treatResponseFromHub(JsonArray& arr){
 					Serial.println(F("post joint result received"));
 #endif
 					handlePostJointResponse(arr[1], tag);
+				} else if (tag[9] == GET_BALANCE[1]){
+#ifdef DEBUG_PRINT
+					Serial.println(F("balance received"));
+#endif
+					handleBalanceResponse(arr[1]);
 				} else {
 #ifdef DEBUG_PRINT
 					Serial.println(F("wrong tag id for response"));
@@ -324,6 +329,7 @@ void treatResponseFromHub(JsonArray& arr){
 		}
 	}
 }
+
 
 void respondToRequestFromHub(JsonArray& arr) {
 

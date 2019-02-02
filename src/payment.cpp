@@ -9,10 +9,14 @@ extern Byteduino byteduino_device;
 bufferPaymentStructure bufferPayment;
 
 cbPaymentResult _cbPaymentResult;
-
+cbBalancesReceived _cbBalancesReceived;
 
 void setCbPaymentResult(cbPaymentResult cbToSet){
 	_cbPaymentResult = cbToSet;
+}
+
+void setCbBalancesReceived(cbBalancesReceived cbToSet){
+	_cbBalancesReceived = cbToSet;
 }
 
 int loadBufferPayment(const int amount, const bool hasDataFeed, JsonObject & dataFeed, const char * recipientAddress, const int id){
@@ -537,4 +541,53 @@ void getPaymentAddressFromPubKey(const char * pubKey, char * paymentAddress) {
 	mainArray.add("sig");
 	mainArray.add(objSig);
 	getChash160ForArray (mainArray, paymentAddress);
+}
+
+void getAvailableBalances(){
+	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(1);
+	StaticJsonBuffer<bufferSize> jsonBuffer;
+	JsonArray & mainArray = jsonBuffer.createArray();
+
+	mainArray.add("request");
+	JsonObject & objRequest= jsonBuffer.createObject();
+
+	objRequest["command"] = "light/get_balances";
+	JsonArray & params = objRequest.createNestedArray("params");
+	params.add((const char *) byteduino_device.fundingAddress);
+	char tag[12];
+	getTag(tag, GET_BALANCE);
+	objRequest["tag"] = (const char*) tag;
+	
+	mainArray.add(objRequest);
+	String output;
+	mainArray.printTo(output);
+#ifdef DEBUG_PRINT
+	Serial.println(output);
+#endif
+	webSocketForHub.sendTXT(output);
+
+}
+
+void handleBalanceResponse(JsonObject& receivedObject){
+	if (receivedObject["response"].is<JsonObject>()){
+		if (receivedObject["response"][byteduino_device.fundingAddress].is<JsonObject>()){
+			if(_cbBalancesReceived){
+				_cbBalancesReceived(receivedObject["response"][byteduino_device.fundingAddress]);
+			} else {
+#ifdef DEBUG_PRINT
+				Serial.println(F("no get balance callback set"));
+#endif
+			}
+		} else {
+#ifdef DEBUG_PRINT
+			Serial.println(F("no balance for my payment address"));
+#endif
+		}
+
+	} else {
+#ifdef DEBUG_PRINT
+		Serial.println(F("response must be a object"));
+#endif
+	}
+
 }

@@ -108,5 +108,5 @@ typedef struct bufferPaymentStructure{
 typedef void (*cbMessageReceived)(const char* senderPubKey, const char* senderHub, const char* messageReceived);
 typedef void (*cbSignatureToConfirm)(const char * signedTxt, const char* JsonDigest);
 typedef void (*cbPaymentResult)(const int id, const int result_code, const char * unit_hash);
-
+typedef void (*cbBalancesReceived)(JsonObject& balances);
 
