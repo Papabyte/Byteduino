@@ -50,7 +50,7 @@ void respondToHub(uint8_t *payload) {
 	Serial.printf("Received: %s\n", payload);
 #endif
 	DynamicJsonBuffer jb(1000);
-	JsonArray& arr = jb.parseArray(payload);
+	JsonArray& arr = jb.parseArray(payload, 10);
 	if (!arr.success()) {
 		
 #ifdef DEBUG_PRINT
