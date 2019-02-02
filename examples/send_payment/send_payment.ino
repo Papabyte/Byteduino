@@ -1,4 +1,4 @@
-// Byteduino Cosigner Device - papabyte.com
+// Byteduino Send Payment - papabyte.com
 // MIT License
 
 #include <Arduino.h>

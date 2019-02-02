@@ -1,4 +1,4 @@
-// Byteduino Cosigner Device - papabyte.com
+// Byteduino Post Datafeed - papabyte.com
 // MIT License
 
 #include <Arduino.h>
