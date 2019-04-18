@@ -220,7 +220,6 @@ void treatReceivedPackage(){
 #endif
 						handlePairingRequest(receivedPackage);
 					}
-
 				} else if (strcmp(subject,"text") == 0){
 #ifdef DEBUG_PRINT
 					Serial.println(F("handle text"));
@@ -236,7 +235,6 @@ void treatReceivedPackage(){
 						Serial.println(F("body and device_hub must be char"));
 #endif
 					}
-
 				}
 #ifndef REMOVE_COSIGNING
 				
@@ -255,7 +253,6 @@ void treatReceivedPackage(){
 	#endif
 						handleSignatureRequest(bufferForPackageReceived.senderPubkey,receivedPackage);
 					}
-
 				}
 #endif
 			} else {
@@ -274,59 +271,71 @@ void treatReceivedPackage(){
 
 
 void treatResponseFromHub(JsonArray& arr){
-	if (arr[1].is<JsonObject>()) {
+	if (!arr[1].is<JsonObject>()) {
+#ifdef DEBUG_PRINT
+					Serial.println(F("response should be an object"));
+#endif
+		return;
+	}
 		const char* tag = arr[1]["tag"];
-		if (tag != nullptr) {
-				if (tag[9] == HEARTBEAT[1]){
+		if (tag == nullptr) {
 #ifdef DEBUG_PRINT
-					Serial.println(ESP.getFreeHeap());
-					Serial.println(F("Heartbeat acknowledged by hub"));
-#endif
-				} else if (tag[9] == UPDATE_MESSENGER_KEY[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("Ephemeral key updated"));
-#endif
-				} else if (tag[9] == GET_RECIPIENT_KEY[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("recipient pub key received"));
-#endif
-					checkAndUpdateRecipientKey(arr[1]);
-				} else if (tag[9] == GET_ADDRESS_DEFINITION[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("definition received"));
-#endif
-					handleDefinition(arr[1]);
-				} else if (tag[9] == GET_INPUTS_FOR_AMOUNT[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("inputs received"));
-#endif
-					handleInputsForAmount(arr[1], tag);
-				}else if (tag[9] == GET_PARENTS_BALL_WITNESSES[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("units props received"));
-#endif
-					handleUnitProps(arr[1]);
-				} else if (tag[9] == POST_JOINT[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("post joint result received"));
-#endif
-					handlePostJointResponse(arr[1], tag);
-				} else if (tag[9] == GET_BALANCE[1]){
-#ifdef DEBUG_PRINT
-					Serial.println(F("balance received"));
-#endif
-					handleBalanceResponse(arr[1]);
-				} else {
-#ifdef DEBUG_PRINT
-					Serial.println(F("wrong tag id for response"));
-#endif
-				}
-		
-		} else {
-#ifdef DEBUG_PRINT
-		Serial.println(F("Second array of response should contain a object"));
+			Serial.println(F("received tag is not a char"));
 #endif
 		}
+	switch (tag[9]) {
+		case HEARTBEAT[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(ESP.getFreeHeap());
+			Serial.println(F("Heartbeat acknowledged by hub"));
+#endif
+		break;
+		case UPDATE_MESSENGER_KEY[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("Ephemeral key updated"));
+#endif
+		break;
+		case GET_RECIPIENT_KEY[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("recipient pub key received"));
+#endif
+			checkAndUpdateRecipientKey(arr[1]);
+		break;
+		case GET_ADDRESS_DEFINITION[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("definition received"));
+#endif
+			handleDefinition(arr[1], tag);
+		break;
+		case GET_INPUTS_FOR_AMOUNT[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("inputs received"));
+#endif
+			handleInputsForAmount(arr[1], tag);
+		break;
+		case GET_PARENTS_BALL_WITNESSES[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("units props received"));
+#endif
+			handleUnitProps(arr[1]);
+		break;
+		case POST_JOINT[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("post joint result received"));
+#endif
+			handlePostJointResponse(arr[1], tag);
+		break;
+		case GET_BALANCE[1]:
+#ifdef DEBUG_PRINT
+			Serial.println(F("balance received"));
+#endif
+			handleBalanceResponse(arr[1]);
+		break;
+		default:
+#ifdef DEBUG_PRINT
+			Serial.println(F("wrong tag id for response"));
+#endif
+		break;
 	}
 }
 

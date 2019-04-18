@@ -26,6 +26,12 @@ void onPaymentResult(const int id, const int result_code, const char * unit_hash
     case NOT_ENOUGH_FUNDS:
       Serial.println(F("Not enough funds"));
       break;
+    case DEFINITION_NOT_STABLE:
+      Serial.println(F("Can't send payment yet, definition not stable"));
+      break;
+    case CHASH_NOT_MATCHING:
+      Serial.println(F("Address definition has changed"));
+      break;  
     case TIMEOUT_PAYMENT_NOT_SENT: // something went wrong, payment is not sent.
       Serial.println(F("Timeout expired - Payment not sent"));
       break;

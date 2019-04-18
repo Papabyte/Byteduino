@@ -26,12 +26,6 @@ int loadBufferPayment(const int amount, const bool hasDataFeed, JsonObject & dat
 #endif
 		return BUFFER_NOT_FREE;
 	} 
-	if (!isValidChash160(recipientAddress)){
-#ifdef DEBUG_PRINT
-		Serial.println(F("Recipient address is not valid"));
-#endif
-		return ADDRESS_NOT_VALID;
-	}
 	if (MAX_DATA_FEED_JSON_SIZE < dataFeed.measureLength()){
 #ifdef DEBUG_PRINT
 		Serial.println(F("data feed size exceeds maximum allowed"));
@@ -61,6 +55,13 @@ int sendPayment(const int amount, const char * recipientAddress, const int payme
 	const int capacity = JSON_OBJECT_SIZE(1);
 	StaticJsonBuffer<capacity> jb;
 	JsonObject & objDataFeed = jb.createObject(); // dummy object
+
+	if (!isValidChash160(recipientAddress)){
+#ifdef DEBUG_PRINT
+		Serial.println(F("Recipient address is not valid"));
+#endif
+		return ADDRESS_NOT_VALID;
+	}
 	return loadBufferPayment(amount, false, objDataFeed, recipientAddress, payment_id);
 }
 
@@ -104,21 +105,19 @@ void managePaymentCompositionTimeOut(){
 
 void requestDefinition(const char* address){
 
-	char output[130];
-	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3);
+	char output[140];
+	const size_t bufferSize = JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(1)+20;
 	StaticJsonBuffer<bufferSize> jsonBuffer;
 	JsonArray & mainArray = jsonBuffer.createArray();
 
 	mainArray.add("request");
 	JsonObject & objRequest= jsonBuffer.createObject();
 
-	objRequest["command"] = "light/get_definition";
-	objRequest["params"] = address;
-	
-	char tag[12];
-	getTag(tag, GET_ADDRESS_DEFINITION);
-	objRequest["tag"] = (const char*) tag;
-	
+	objRequest["command"] = "light/get_definition_for_address";
+	JsonObject &objParams = objRequest.createNestedObject("params");
+	objParams["address"] = address;
+	objRequest["tag"] = getTagWithId(GET_ADDRESS_DEFINITION, bufferPayment.id);
+
 	mainArray.add(objRequest);
 	mainArray.printTo(output);
 #ifdef DEBUG_PRINT
@@ -127,38 +126,78 @@ void requestDefinition(const char* address){
 	webSocketForHub.sendTXT(output);
 }
 
-void handlePostJointResponse(JsonObject& receivedObject, const char * tag){
+int extractIdFromTag(const char * tag){
 	String stringTag = tag;
-	String strId = stringTag.substring(10);
-	int id = strId.toInt();
-	const char * response = receivedObject["response"];
-	if (response != nullptr){
-		if (strcmp(response, "accepted") == 0){
-			if(_cbPaymentResult){
-				_cbPaymentResult(id, PAYMENT_ACKNOWLEDGED, bufferPayment.unit);
-			}
-			bufferPayment.isFree = true;
-		} else {
-			if (receivedObject["error"].is<JsonObject>()){
+	return stringTag.substring(10).toInt();
+}
+
+String getTagWithId(const char * tagType, int id){
+	char tag[12];
+	getTag(tag, tagType);
+	return tag + String(bufferPayment.id);
+}
+
+void handlePostJointResponse(JsonObject& receivedObject, const char * tag){
+	int id = extractIdFromTag(tag);
+
+	if (receivedObject["response"].is<JsonObject>()){
+		if(_cbPaymentResult){
+			_cbPaymentResult(id, PAYMENT_REFUSED, bufferPayment.unit);
+		}
+		bufferPayment.isFree = true;
+	} else {
+		const char * response = receivedObject["response"];
+		if (response != nullptr){
+			if (strcmp(response, "accepted") == 0){
 				if(_cbPaymentResult){
-					_cbPaymentResult(id, PAYMENT_REFUSED, bufferPayment.unit);
+					_cbPaymentResult(id, PAYMENT_ACKNOWLEDGED, bufferPayment.unit);
 				}
 				bufferPayment.isFree = true;
 			}
-		}
-	} 
+		} 
+	}
 }
 
 
-void handleDefinition(JsonObject& receivedObject) {
-
-	if (receivedObject["response"].is<JsonArray>()){
-		bufferPayment.requireDefinition = false;
+void handleDefinition(JsonObject& receivedObject, const char * tag) {
+	int id = extractIdFromTag(tag);
+	if (receivedObject["response"].is<JsonObject>()){
+		const char * definition_chash = receivedObject["response"]["definition_chash"];
+		if (definition_chash != nullptr){
+			if (strcmp(definition_chash, byteduino_device.fundingAddress) == 0){
+				if (receivedObject["response"]["is_stable"].is<bool>()){ 
+					if(receivedObject["response"]["is_stable"]){
+						if (receivedObject["response"]["definition"].is<JsonArray>()){
+							bufferPayment.requireDefinition = false;
+						} else {
+							bufferPayment.requireDefinition = true;
+						}
+						bufferPayment.isDefinitionReceived = true;
+					} else {
+						if (_cbPaymentResult)
+							_cbPaymentResult(id, DEFINITION_NOT_STABLE, bufferPayment.unit);
+						bufferPayment.isFree = true;
+					}
+				} else {
+	#ifdef DEBUG_PRINT
+					Serial.println(F("is_stable flag should be a boolean"));
+	#endif
+				}
+			} else {
+				if (_cbPaymentResult)
+					_cbPaymentResult(id, CHASH_NOT_MATCHING, bufferPayment.unit);
+				bufferPayment.isFree = true;
+			}
+		} else {
+#ifdef DEBUG_PRINT
+		Serial.println(F("hub didn't return current definition chash"));
+#endif	
+		}
 	} else {
-		bufferPayment.requireDefinition = true;
+#ifdef DEBUG_PRINT
+		Serial.println(F("response for address definition should be an object"));
+#endif
 	}
-
-	bufferPayment.isDefinitionReceived = true;
 }
 
 
@@ -183,13 +222,7 @@ void requestInputsForAmount(int amount, const char * address){
 
 	objRequest["command"] = "light/pick_divisible_coins_for_amount";
 	objRequest["params"] = objParams;
-
-	char tag[12];
-	getTag(tag, GET_INPUTS_FOR_AMOUNT);
-	String idString = String(bufferPayment.id);
-	String tagWithId = tag + idString;;
-	Serial.println(tagWithId);
-	objRequest["tag"] = tagWithId;
+	objRequest["tag"] = getTagWithId(GET_INPUTS_FOR_AMOUNT, bufferPayment.id);
 
 	mainArray.add(objRequest);
 	String output;
@@ -202,15 +235,18 @@ void requestInputsForAmount(int amount, const char * address){
 }
 
 void handleInputsForAmount(JsonObject& receivedObject, const char * tag) {
-	String stringTag = tag;
-//	String strId = stringTag.substring(10);
-	int id = stringTag.substring(10).toInt();
+	int id = extractIdFromTag(tag);
 	if (receivedObject["response"].is<JsonObject>()){
 		if (receivedObject["response"]["inputs_with_proofs"].is<JsonArray>()){
 			if (receivedObject["response"]["total_amount"].is<int>()){
 				if (receivedObject["response"]["total_amount"] > 0){
-					if (!bufferPayment.isFree && id == bufferPayment.id)
+					if (!bufferPayment.isFree && id == bufferPayment.id){
 						composeAndSendUnit(receivedObject["response"]["inputs_with_proofs"], receivedObject["response"]["total_amount"]);
+					} else {
+#ifdef DEBUG_PRINT
+						Serial.println(F("response for inputs doesn't correspond to current payment buffer"));
+#endif
+					}
 				}else{
 					if(_cbPaymentResult){
 						_cbPaymentResult(id, NOT_ENOUGH_FUNDS, "");
@@ -229,9 +265,9 @@ void handleInputsForAmount(JsonObject& receivedObject, const char * tag) {
 #endif
 		}
 	} else {
-	#ifdef DEBUG_PRINT
+#ifdef DEBUG_PRINT
 		Serial.println(F("response should be an object"));
-	#endif
+#endif
 	}
 
 }
@@ -245,7 +281,6 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	JsonObject & objParams = jsonBuffer.createObject();
 
 	JsonObject &unit = objParams.createNestedObject("unit");
-
 
 	if (byteduino_device.isTestNet){
 		unit["version"] = TEST_NET_VERSION;
@@ -293,7 +328,10 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	for (JsonObject& elem : arrInputs) {
 		JsonObject& input = elem["input"];
 		inputs.add(input);
-		payload_commission+= 44 + 8 + 8; //unit + message index + output index
+		if (input.containsKey("type"))//if it has a type, then it's header commission
+			payload_commission+= 18 + 8 + 8; //header_commission + from_main_chain_index + to_main_chain_index
+		else
+			payload_commission+= 44 + 8 + 8; //unit + message index + output index
 	}
 
 	JsonArray &outputs = paymentPayload.createNestedArray("outputs");
@@ -391,11 +429,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 
 	objRequest["command"] = "post_joint";
 	objRequest["params"] = objParams;
-	char tag[12];
-	getTag(tag, POST_JOINT);
-	String idString = String(bufferPayment.id);
-	String tagWithId = tag + idString;;
-	objRequest["tag"] = tagWithId;
+	objRequest["tag"] =  getTagWithId(POST_JOINT, bufferPayment.id);;
 	
 	mainArray.add(objRequest);
 	String output;
@@ -408,7 +442,6 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 
 
 void getParentsAndLastBallAndWitnesses(){
-
 
 	char output[200];
 	const size_t bufferSize = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(4);

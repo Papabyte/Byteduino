@@ -69,7 +69,7 @@ typedef struct walletCreation{
 } walletCreation;
 
 
-typedef struct waitingConfirmationRoom{
+typedef struct waitingConfirmationSignatureStructure{
 	bool isFree = true;
 	bool isConfirmed = false;
 	bool isRefused = false;
@@ -81,7 +81,7 @@ typedef struct waitingConfirmationRoom{
 	char signedText[45];
 	char sigb64[89];
 	char JsonDigest[500];
-} waitingConfirmationRoom;
+} waitingConfirmationSignatureStructure;
 
 typedef struct bufferPaymentStructure{
 	bool isFree = true;

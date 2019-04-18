@@ -46,7 +46,7 @@
 #include "libs/Base64.h"
 #include "random_gen.h"
 
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 //#define REMOVE_COSIGNING
 
 void byteduino_init ();

@@ -5,7 +5,7 @@
 #include "byteduino.h"
 
 void requestDefinition(const char* address);
-void handleDefinition(JsonObject& receivedObject) ;
+void handleDefinition(JsonObject& receivedObject, const char * tag);
 void requestInputsForAmount(int amount, const char * address);
 void handleInputsForAmount(JsonObject& receivedObject, const char * tag);
 void getParentsAndLastBallAndWitnesses();
@@ -22,3 +22,5 @@ void handleBalanceResponse(JsonObject& receivedObject);
 void setCbPaymentResult(cbPaymentResult cbToSet);
 void setCbBalancesReceived(cbBalancesReceived cbToSet);
 void getAvailableBalances();
+int extractIdFromTag(const char * tag);
+String getTagWithId(const char * tagType, int id);

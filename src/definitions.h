@@ -44,7 +44,6 @@
 
 //timeout
 #define REQUEST_KEY_TIME_OUT 4
-#define SEND_PAYMENT_TIME_OUT 8
 
 //device specific
 #ifdef ESP8266
@@ -59,6 +58,8 @@
 	#define RECEIVED_PACKAGE_BUFFER_SIZE 7000
 	#define RANDOM_POOL_TICKER_RESET 1600
 	#define MAX_DATA_FEED_JSON_SIZE 200
+	#define SEND_PAYMENT_TIME_OUT 15
+
 #endif
 
 #ifdef ESP32
@@ -73,6 +74,7 @@
 	#define RECEIVED_PACKAGE_BUFFER_SIZE 31000
 	#define RANDOM_POOL_TICKER_RESET 700
 	#define MAX_DATA_FEED_JSON_SIZE 2000
+	#define SEND_PAYMENT_TIME_OUT 8
 #endif
 
 //error codes
@@ -88,6 +90,8 @@
 #define PAYMENT_ACKNOWLEDGED 9
 #define PAYMENT_REFUSED 10
 #define ADDRESS_NOT_VALID 11
+#define DEFINITION_NOT_STABLE 12
+#define CHASH_NOT_MATCHING 13
 
 //network version
 #define MAIN_NET_VERSION "1.0"

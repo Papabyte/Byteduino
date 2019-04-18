@@ -115,7 +115,6 @@ void handleNewWalletRequest(char initiatiorPubKey [45], JsonObject& package){
 						memcpy(newWallet.initiatorPubKey,initiatiorPubKey,45);
 						memcpy(newWallet.id,wallet,45);
 
-						
 						for (int i; i < otherCosignersSize;i++){
 							const  char* device_address = package["body"]["other_cosigners"][i]["device_address"];
 							const  char* pubkey = package["body"]["other_cosigners"][i]["pubkey"];
@@ -142,9 +141,9 @@ void handleNewWalletRequest(char initiatiorPubKey [45], JsonObject& package){
 						saveWalletDefinitionInFlash(wallet, wallet_name, package["body"]["wallet_definition_template"]);
 					} else {
 #ifdef DEBUG_PRINT
-				Serial.println(F("wallet_definition_template and wallet_name must be char"));
+						Serial.println(F("wallet_definition_template and wallet_name must be char"));
 #endif
-				}
+					}
 				} else {
 #ifdef DEBUG_PRINT
 				Serial.println(F("other_cosigners cannot be empty"));

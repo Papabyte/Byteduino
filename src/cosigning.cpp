@@ -6,7 +6,7 @@
 walletCreation newWallet;
 extern bufferPackageSent bufferForPackageSent;
 extern Byteduino byteduino_device;
-waitingConfirmationRoom waitingConfirmationSignature;
+waitingConfirmationSignatureStructure waitingConfirmationSignature;
 
 cbSignatureToConfirm _cbSignatureToConfirm;
 
