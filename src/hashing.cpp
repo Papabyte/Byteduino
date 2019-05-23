@@ -133,11 +133,10 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 		return false;
 	//we create an array of object keys sorted by alphabetic order
 	for (JsonObject::iterator it=object.begin(); it!=object.end(); ++it) {
+		if (strlen(it->key) >= MAX_KEY_SIZE)
+			return false;
 		if (numberOfKeysSorted > 0){
 			int i = numberOfKeysSorted;
-			if (strlen(it->key) >= MAX_KEY_SIZE)
-				return false;
-
 			while (isChar1BeforeChar2(it->key,sortedKeys[i-1]) && i>0){
 				i--;
 			}
