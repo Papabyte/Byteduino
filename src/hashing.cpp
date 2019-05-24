@@ -93,6 +93,11 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 		} else if (array[i].is<int>()){
 			int integer = array[i];
 			updateHashForInteger<T>(hasher, integer);
+		} else if (array[i].is<bool>()){
+			bool flag = array[i];
+			updateHashForBoolean<T>(hasher, flag);
+		} else {
+			return false;
 		}
 		isFirst = false;
 	}
@@ -102,6 +107,26 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 	updateHash(hasher,"\0]",2);
 	return true;
 }
+
+
+template <class T> bool updateHashForBoolean (T hasher, bool flag){
+#ifdef DEBUG_HASHING
+	Serial.println("$b$");
+#endif
+	updateHash(hasher,"\0b\0",3);
+	if (flag){
+#ifdef DEBUG_HASHING
+		Serial.println("true");
+#endif
+		updateHash(hasher,"true",4);
+	} else {
+#ifdef DEBUG_HASHING
+		Serial.println("false");
+#endif
+		updateHash(hasher,"false",5);
+	}
+}
+
 
 template <class T> bool updateHashForChar (T hasher, const char * charToHash){
 #ifdef DEBUG_HASHING
@@ -201,6 +226,13 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 #endif
 			updateHash(hasher,key,strlen(key));
 			updateHashForChar<T>(hasher, charToHash);
+		} else if (object[key].is<bool>()){
+			bool flag = object[key];
+#ifdef DEBUG_HASHING
+			Serial.println(key);
+#endif
+			updateHash(hasher,key,strlen(key));
+			updateHashForBoolean<T>(hasher, flag);
 		} else {
 			return false;
 		}
