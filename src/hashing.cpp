@@ -86,7 +86,10 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 				return false;
 		} else if (array[i].is<char*>()){
 			const char* charToHash = array[i];
-			updateHashForChar<T>(hasher, charToHash);
+			if (charToHash != nullptr)
+				updateHashForChar<T>(hasher, charToHash);
+			else
+				return false;
 		} else if (array[i].is<int>()){
 			int integer = array[i];
 			updateHashForInteger<T>(hasher, integer);
@@ -133,7 +136,7 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 		return false;
 	//we create an array of object keys sorted by alphabetic order
 	for (JsonObject::iterator it=object.begin(); it!=object.end(); ++it) {
-		if (strlen(it->key) >= MAX_KEY_SIZE)
+		if (strlen(it->key) > MAX_KEY_SIZE)
 			return false;
 		if (numberOfKeysSorted > 0){
 			int i = numberOfKeysSorted;
@@ -191,6 +194,8 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 
 		} else if (object[key].is<char*>()){
 			const char* charToHash = object[sortedKeys[i]];
+			if (charToHash == nullptr)
+				return false;
 #ifdef DEBUG_HASHING
 			Serial.println(key);
 #endif
