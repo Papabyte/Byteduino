@@ -317,7 +317,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 			payload_commission+= strlen(p.value);
 		}
 
-		getBase64HashForJsonObject (datafeedPayloadHash, datafeedPayload);
+		getBase64HashForJsonObject (datafeedPayloadHash, datafeedPayload, false);
 	}
 
 	JsonObject &paymentPayload = jsonBuffer.createObject();
@@ -352,7 +352,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 		outputs.add(firstOutput);
 
 	char paymentPayloadHash[45];
-	getBase64HashForJsonObject (paymentPayloadHash, paymentPayload);
+	getBase64HashForJsonObject (paymentPayloadHash, paymentPayload, false);
 
 	unit["parent_units"] = parent_units;
 	JsonArray &messages = jsonBuffer.createArray();
@@ -389,7 +389,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	authors.add(firstAuthor);
 
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash, unit);
+	getSHA256ForJsonObject(hash, unit, false);
 	char sigb64 [89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM4400, hash,32);
 
@@ -399,7 +399,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	firstAuthor["authentifiers"] = authentifier;
 
 	char content_hash[45];
-	getBase64HashForJsonObject (content_hash, unit);
+	getBase64HashForJsonObject (content_hash, unit, false);
 
 	unit["content_hash"] = (const char *) content_hash;
 
@@ -407,7 +407,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	firstAuthor.remove("definition");
 	unit.remove("messages");
 	char unit_hash[45];
-	getBase64HashForJsonObject (unit_hash, unit);
+	getBase64HashForJsonObject (unit_hash, unit, false);
 
 	unit["unit"] = (const char *) unit_hash;
 	strcpy(bufferPayment.unit, unit_hash);

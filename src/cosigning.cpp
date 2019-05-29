@@ -170,7 +170,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 	
 
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash, unsignedUnit);
+	getSHA256ForJsonObject(hash, unsignedUnit, false);
 	char sigb64 [89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM4400, hash,32);
 
@@ -233,7 +233,7 @@ void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPack
 								if(receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"].is<JsonObject>()){
 									const char * payloadHash = receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload_hash"];
 									char hashB64[45];
-									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"]);
+									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"], false);
 									if (strcmp(hashB64,payloadHash) != 0){
 #ifdef DEBUG_PRINT
 									Serial.println(F("payload hash does not match"));

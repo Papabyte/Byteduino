@@ -133,7 +133,7 @@ void encryptAndSendPackage(){
 	objParams["pubkey"] = (const char*) byteduino_device.keys.publicKeyM1b64;
 	
 	uint8_t hash[32];
-	getSHA256ForJsonObject (hash, objParams);
+	getSHA256ForJsonObject (hash, objParams, false);
 
 	char sigb64[89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM1, hash,32);
@@ -411,7 +411,7 @@ void treatReceivedMessage(JsonObject& messageBody){
 		if (checkMessageStructure(message)){
 
 			char hashB64[45];
-			getBase64HashForJsonObject(hashB64, message);
+			getBase64HashForJsonObject(hashB64, message, false);
 #ifdef DEBUG_PRINT
 			Serial.println(F("Computed message hash"));
 			Serial.println(hashB64);
