@@ -279,6 +279,7 @@ void treatResponseFromHub(JsonArray& arr){
 	}
 		const char* tag = arr[1]["tag"];
 		if (tag == nullptr) {
+			return;
 #ifdef DEBUG_PRINT
 			Serial.println(F("received tag is not a char"));
 #endif
