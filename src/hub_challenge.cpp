@@ -33,7 +33,7 @@ void respondToHubChallenge(const char* challenge) {
 	
 	char sigb64[89];
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash ,objBody);
+	getSHA256ForJsonObject(hash ,objBody, false);
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM1,hash,32);
 	
 	objBody["signature"]  = (const char *) sigb64;

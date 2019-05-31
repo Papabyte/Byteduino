@@ -94,7 +94,9 @@
 #define CHASH_NOT_MATCHING 13
 
 //network version
-#define MAIN_NET_VERSION "1.0"
+#define MAIN_NET_VERSION "2.0"
 #define MAIN_NET_ALT "1"
-#define TEST_NET_VERSION "1.0t"
+#define TEST_NET_VERSION "2.0t"
 #define TEST_NET_ALT "2"
+#define VERSION_WITHOUT_TIMESTAMP "1.0"
+#define TIMESTAMP_UPGRADE_MCI 100000000000

@@ -98,7 +98,7 @@ void treatWaitingSignature(){
 }
 
 
-void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char * recipientHub, JsonObject& body){
+void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char * recipientHub, JsonObject& body, const bool bVersion2){
 
 	JsonObject& unsignedUnit = body["unsigned_unit"];
 	int authorsSize = unsignedUnit["authors"].size();
@@ -116,7 +116,8 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 	removeKeyIfExisting("headers_commission", unsignedUnit);
 	removeKeyIfExisting("payload_commission", unsignedUnit);
 	removeKeyIfExisting("main_chain_index", unsignedUnit);
-	removeKeyIfExisting("timestamp", unsignedUnit);
+	if (!bVersion2)
+		removeKeyIfExisting("timestamp", unsignedUnit);
 	size_t messagesSize = unsignedUnit["messages"].size();
 	
 	//we create a JSON digest about what will signed
@@ -170,7 +171,7 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 	
 
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash, unsignedUnit);
+	getSHA256ForJsonObject(hash, unsignedUnit, bVersion2);
 	char sigb64 [89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM4400, hash,32);
 
@@ -222,6 +223,11 @@ void stripSignAndAddToConfirmationRoom(const char recipientPubKey[45],const char
 void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPackage){
 	if (receivedPackage["body"]["unsigned_unit"].is<JsonObject>()){
 
+	const char* version = receivedPackage["body"]["unsigned_unit"]["version"];
+	Serial.println(version);
+
+	const bool bVersion2 = strcmp(VERSION_WITHOUT_TIMESTAMP, version) != 0 || byteduino_device.isTestNet;
+
 		if (receivedPackage["body"]["unsigned_unit"]["messages"].is<JsonArray>()){
 			const char* device_hub = receivedPackage["device_hub"];
 			if (device_hub != nullptr){
@@ -233,7 +239,7 @@ void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPack
 								if(receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"].is<JsonObject>()){
 									const char * payloadHash = receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload_hash"];
 									char hashB64[45];
-									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"]);
+									getBase64HashForJsonObject (hashB64, receivedPackage["body"]["unsigned_unit"]["messages"][i]["payload"], bVersion2);
 									if (strcmp(hashB64,payloadHash) != 0){
 #ifdef DEBUG_PRINT
 									Serial.println(F("payload hash does not match"));
@@ -258,7 +264,7 @@ void handleSignatureRequest(const char senderPubkey[45],JsonObject& receivedPack
 							}
 
 						}
-						stripSignAndAddToConfirmationRoom(senderPubkey,device_hub, receivedPackage["body"]);
+						stripSignAndAddToConfirmationRoom(senderPubkey,device_hub, receivedPackage["body"], bVersion2);
 
 					} else {
 #ifdef DEBUG_PRINT

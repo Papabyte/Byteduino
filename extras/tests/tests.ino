@@ -16,13 +16,13 @@ bool testMaxKeySize() {
 
   obj[key] = "value";
 
-  if (!updateHashForObject<SHA256&>(hasher, obj, true)) { //normal key size
+  if (!updateHashForObject<SHA256&>(hasher, obj, false, true)) { //normal key size
     return false;
   }
   key[MAX_KEY_SIZE] = 0x32;
   obj[key] = "value";
 
-  if (updateHashForObject<SHA256&>(hasher, obj, true)) { //oversized key
+  if (updateHashForObject<SHA256&>(hasher, obj, false, true)) { //oversized key
     return false;
   }
 
@@ -41,13 +41,13 @@ bool testMaxKeysCount() {
   }
 
   SHA256 hasher;
-  if (!updateHashForObject<SHA256&>(hasher, obj, true) || !updateHashForObject<SHA256&>(hasher, obj, false)) {
+  if (!updateHashForObject<SHA256&>(hasher, obj, true, false) || !updateHashForObject<SHA256&>(hasher, obj, false, false) || !updateHashForObject<SHA256&>(hasher, obj, true, true) || !updateHashForObject<SHA256&>(hasher, obj, false, true)) {
     return false;
   }
   sprintf(key, "%d", MAX_KEYS_COUNT);
   obj[key] = "value";
 
-  if (updateHashForObject<SHA256&>(hasher, obj, true) || updateHashForObject<SHA256&>(hasher, obj, false)) { //overcount
+  if (updateHashForObject<SHA256&>(hasher, obj, true, false) || updateHashForObject<SHA256&>(hasher, obj, false, false) || updateHashForObject<SHA256&>(hasher, obj, true, true) || updateHashForObject<SHA256&>(hasher, obj, false, true)) { //overcount
     return false;
   }
   return true;
@@ -59,7 +59,7 @@ bool testNullValueInObject() {
   JsonObject& obj = jb.createObject();
   obj["key"] = (char*) 0;
   SHA256 hasher;
-  if (updateHashForObject<SHA256&>(hasher, obj, true) || updateHashForObject<SHA256&>(hasher, obj, false)) {
+  if (updateHashForObject<SHA256&>(hasher, obj, true, false) || updateHashForObject<SHA256&>(hasher, obj, false, false) || updateHashForObject<SHA256&>(hasher, obj, true, true) || updateHashForObject<SHA256&>(hasher, obj, false, true)) {
     return false;
   }
   return true;
@@ -93,17 +93,30 @@ bool testObjectHash() {
   }
 
   DynamicJsonBuffer jb(1000);
-  JsonObject& obj = jb.parse("{\"key\":\"value\", \"key2\":\"2\",\"key3\":{\"key\":\"value\",\"key2\":[\"string\",\"0\", [\"string\",true,false]]}, \"key4\":true}");
+  JsonObject& obj = jb.parse("{\"key\":\"value\", \"key2\":\"2\",\"key4\":{\"key\":\"value\",\"key7\":[45,\"string\",\"0\", [\"string\",true,false]]}, \"key6\":true, \"key5\":18}");
   char base64Hash[45];
-  getBase64HashForJsonObject(base64Hash, obj);
+  getBase64HashForJsonObject(base64Hash, obj, false);
   if (strlen(base64Hash) != 44) {
     Serial.println("Wrong base 64 hash length");
     return false;
   }
-  if (strcmp(base64Hash, "0c5Dlrt3Xg80i7jELNlcUfxxchJLUo1j22AWGt0MiFI=") != 0) {
+  if (strcmp(base64Hash, "bz8SOiezDEAOlP7EfZbiK84Q8wecOERpyq2F2eJdw2g=") != 0) {
     Serial.println("Wrong calculated hash");
     return false;
   }
+  getBase64HashForJsonObject(base64Hash, obj, true);
+  if (strlen(base64Hash) != 44) {
+    Serial.println("Wrong base 64 hash length");
+    return false;
+  }
+  if (strcmp(base64Hash, "MH6OypP+HuecTHIy5n/xABQx2gkVfjxaKseb5/52vV8=") != 0) {
+    Serial.println("Wrong calculated hash");
+    return false;
+  }
+
+  getBase64HashForJsonObject(base64Hash, obj, true);
+
+
   return true;
 }
 
@@ -115,7 +128,7 @@ bool testNullValueInArray() {
   JsonArray& arr = jb.createArray();
   arr.add((char*)0);
   SHA256 hasher;
-  if (updateHashForArray<SHA256&>(hasher, arr, true) || updateHashForArray<SHA256&>(hasher, arr, false)) {
+  if (updateHashForArray<SHA256&>(hasher, arr, true, false) || updateHashForArray<SHA256&>(hasher, arr, false, false) || updateHashForArray<SHA256&>(hasher, arr, true, true) || updateHashForArray<SHA256&>(hasher, arr, false, true)) {
     return false;
   }
   return true;
@@ -126,7 +139,7 @@ bool testEmptyArray() {
   JsonArray& arr = jb.createArray();
 
   SHA256 hasher;
-  if (updateHashForArray<SHA256&>(hasher, arr, true) || updateHashForArray<SHA256&>(hasher, arr, false)) {
+  if (updateHashForArray<SHA256&>(hasher, arr, true, false) || updateHashForArray<SHA256&>(hasher, arr, false, false) || updateHashForArray<SHA256&>(hasher, arr, true, false) || updateHashForArray<SHA256&>(hasher, arr, false, false)) {
     return false;
   }
   return true;
