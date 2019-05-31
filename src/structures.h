@@ -100,6 +100,8 @@ typedef struct bufferPaymentStructure{
 	char parent_units [2][45];
 	char last_ball[45];
 	char last_ball_unit[45];
+	int last_ball_mci;
+	int timestamp;
 	char witness_list_unit[45];
 	char unit[45];
 } bufferPaymentStructure;

@@ -2,7 +2,7 @@
 // MIT License
 #include "hashing.h"
 
-#define DEBUG_HASHING
+//#define DEBUG_HASHING
 
 const byte offsets[] = {1,5,6,11,20,22,28,33,36,41,49,58,65,74,77,79,82,90,94,100,102,108,112,115,118,126,129,131,138,147,152,154};
 const char base32Chars [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -126,64 +126,64 @@ template <class T> bool updateHashForArray (T hasher, JsonArray& array, bool isF
 
 
 template <class T> bool updateHashForBoolean (T hasher, bool flag, bool bVersion2){
-#ifdef DEBUG_HASHING
-	Serial.println("$b$");
-#endif
 
 	if (bVersion2){
 		if (flag){
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println("true");
-	#endif
+#endif
 			updateHash(hasher,"true",4);
 		} else {
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println("false");
-	#endif
+#endif
 			updateHash(hasher,"false",5);
 		}
 
 	} else {
 
-	updateHash(hasher,"\0b\0",3);
-	if (flag){
+		updateHash(hasher,"\0b\0",3);
 #ifdef DEBUG_HASHING
-		Serial.println("true");
+		Serial.println("$b$");
 #endif
-		updateHash(hasher,"true",4);
+		if (flag){
+#ifdef DEBUG_HASHING
+			Serial.println("true");
+#endif
+			updateHash(hasher,"true",4);
 	} else {
 #ifdef DEBUG_HASHING
-		Serial.println("false");
+			Serial.println("false");
 #endif
-		updateHash(hasher,"false",5);
-	}
+			updateHash(hasher,"false",5);
+		}
 	}
 }
 
 
 template <class T> bool updateHashForChar (T hasher, const char * charToHash, bool bVersion2){
-		if (bVersion2){
-	#ifdef DEBUG_HASHING
+	if (bVersion2){
+#ifdef DEBUG_HASHING
 			Serial.println("\"");
-	#endif
+#endif
 			updateHash(hasher,"\"",1);
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println(charToHash);
-	#endif
+#endif
 			updateHash(hasher,charToHash,strlen(charToHash));
-				#ifdef DEBUG_HASHING
+			#ifdef DEBUG_HASHING
 			Serial.println("\"");
-	#endif
+#endif
 			updateHash(hasher,"\"",1);
-	}else{
+	} else {
 #ifdef DEBUG_HASHING
-	Serial.println("$s$");
+		Serial.println("$s$");
 #endif
-	updateHash(hasher,"\0s\0",3);
+		updateHash(hasher,"\0s\0",3);
 #ifdef DEBUG_HASHING
-	Serial.println(charToHash);
+		Serial.println(charToHash);
 #endif
-	updateHash(hasher,charToHash,strlen(charToHash));
+		updateHash(hasher,charToHash,strlen(charToHash));
 	}
 }
 
@@ -191,26 +191,19 @@ template <class T> bool updateHashForInteger (T hasher, const int integer, bool 
 	char str[16];
 	sprintf(str, "%d", integer);
 	if (bVersion2){
-	#ifdef DEBUG_HASHING
-			Serial.println("\"");
-	#endif
-			updateHash(hasher,"\"",1);
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println(str);
-	#endif
+#endif
 			updateHash(hasher,str,strlen(str));
-				#ifdef DEBUG_HASHING
-			Serial.println("\"");
-	#endif
-			updateHash(hasher,"\"",1);
+
 	}else{
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println("$n$");
-	#endif
+#endif
 			updateHash(hasher,"\0n\0",3);
-	#ifdef DEBUG_HASHING
+#ifdef DEBUG_HASHING
 			Serial.println(str);
-	#endif
+#endif
 			updateHash(hasher,str,strlen(str));
 	}
 } 
@@ -253,11 +246,18 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 		}
 
 		if (bVersion2){
+			if (i==0){
 #ifdef DEBUG_HASHING
 			Serial.println("{");
 #endif
 			updateHash(hasher,"{",1);
+			} 
+#ifdef DEBUG_HASHING
+			Serial.println("\"");
+#endif
+			updateHash(hasher,"\"",1);
 		}
+
 			const char* key = sortedKeys[i];
 #ifdef DEBUG_HASHING
 			Serial.println(key);
@@ -265,9 +265,9 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 			updateHash(hasher,key,strlen(key));
 		if (bVersion2){
 #ifdef DEBUG_HASHING
-			Serial.println("\":\"");
+			Serial.println("\":");
 #endif
-			updateHash(hasher,"\":\"",3);
+			updateHash(hasher,"\":",2);
 		}
 		if (object[key].is<JsonObject>()){
 
@@ -299,15 +299,18 @@ template <class T> bool updateHashForObject (T hasher, JsonObject& object, bool 
 		}
 		isFirst = false;
 		if (bVersion2){
-		if(i != (keysCount-1)){ //if not last array item
+			if(i != (keysCount-1)){ //if not last array item
 #ifdef DEBUG_HASHING
-			Serial.println(",");
+				Serial.println(",");
 #endif
-			updateHash(hasher,",",1);
+				updateHash(hasher,",",1);
+			} else{
+#ifdef DEBUG_HASHING
+				Serial.println("}");
+#endif
+				updateHash(hasher,"}",1);
+			}
 		}
-
-		}
-
 	}
 	return true;
 }
