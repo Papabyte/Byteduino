@@ -346,14 +346,21 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 		firstOutput["amount"] = (const int) bufferPayment.amount;
 		payload_commission+= 32 + 8; // addresse + amount
 	}
+
 	JsonObject &changeOutput = jsonBuffer.createObject();
 	changeOutput["address"] = (const char *) byteduino_device.fundingAddress;
-	payload_commission+= 32 + 8; // addresse + amount
-	changeOutput["amount"] = total_amount - bufferPayment.amount - headers_commission - payload_commission;
-	outputs.add(changeOutput);
+	payload_commission+= 32 + 8; // addresse + amount4
+	int change_amount = total_amount - bufferPayment.amount - headers_commission - payload_commission;
+	changeOutput["amount"] = change_amount;
+
+	if (change_amount <= bufferPayment.amount) // we sort outputs by amount in case recipient address is same as change address
+		outputs.add(changeOutput);
 
 	if (bufferPayment.amount>0)
 		outputs.add(firstOutput);
+
+	if (change_amount > bufferPayment.amount)
+		outputs.add(changeOutput);
 
 	char paymentPayloadHash[45];
 	getBase64HashForJsonObject (paymentPayloadHash, paymentPayload, true);
