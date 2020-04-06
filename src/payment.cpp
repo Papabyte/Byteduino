@@ -277,8 +277,6 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	int headers_commission = 0;
 	int payload_commission = 0;
 
-	const bool bVersion2 = byteduino_device.isTestNet || bufferPayment.last_ball_mci >= TIMESTAMP_UPGRADE_MCI;
-
 	DynamicJsonBuffer jsonBuffer(1000);
 	JsonArray & mainArray = jsonBuffer.createArray();
 	JsonObject & objParams = jsonBuffer.createObject();
@@ -290,11 +288,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 		unit["alt"] = TEST_NET_ALT;
 		headers_commission += 5;
 	} else {
-		if (bufferPayment.last_ball_mci >= TIMESTAMP_UPGRADE_MCI)
-			unit["version"] = MAIN_NET_VERSION;
-		else
-			unit["version"] = VERSION_WITHOUT_TIMESTAMP;
-
+		unit["version"] = MAIN_NET_VERSION;
 		unit["alt"] = MAIN_NET_ALT;
 		headers_commission += 4;
 	}
@@ -304,11 +298,8 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	unit["last_ball"] = (const char *) bufferPayment.last_ball;
 	headers_commission += 132;
 
-	if (bVersion2){
-		unit["timestamp"] = bufferPayment.timestamp;
-		headers_commission += 8;
-	}
-
+	unit["timestamp"] = bufferPayment.timestamp;
+	headers_commission += 8;
 
 	JsonArray & parent_units = jsonBuffer.createArray();
 	parent_units.add((const char * ) bufferPayment.parent_units[0]);
@@ -330,7 +321,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 			payload_commission+= strlen(p.value);
 		}
 
-		getBase64HashForJsonObject (datafeedPayloadHash, datafeedPayload, bVersion2);
+		getBase64HashForJsonObject (datafeedPayloadHash, datafeedPayload, true);
 	}
 
 	JsonObject &paymentPayload = jsonBuffer.createObject();
@@ -365,7 +356,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 		outputs.add(firstOutput);
 
 	char paymentPayloadHash[45];
-	getBase64HashForJsonObject (paymentPayloadHash, paymentPayload, bVersion2);
+	getBase64HashForJsonObject (paymentPayloadHash, paymentPayload, true);
 
 	unit["parent_units"] = parent_units;
 	JsonArray &messages = jsonBuffer.createArray();
@@ -402,7 +393,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	authors.add(firstAuthor);
 
 	uint8_t hash[32];
-	getSHA256ForJsonObject(hash, unit, bVersion2);
+	getSHA256ForJsonObject(hash, unit, true);
 	char sigb64 [89];
 	getB64SignatureForHash(sigb64 ,byteduino_device.keys.privateM4400, hash,32);
 
@@ -412,7 +403,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	firstAuthor["authentifiers"] = authentifier;
 
 	char content_hash[45];
-	getBase64HashForJsonObject (content_hash, unit, bVersion2);
+	getBase64HashForJsonObject (content_hash, unit, true);
 
 	unit["content_hash"] = (const char *) content_hash;
 
@@ -420,7 +411,7 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	firstAuthor.remove("definition");
 	unit.remove("messages");
 	char unit_hash[45];
-	getBase64HashForJsonObject (unit_hash, unit, bVersion2);
+	getBase64HashForJsonObject (unit_hash, unit, true);
 
 	unit["unit"] = (const char *) unit_hash;
 	strcpy(bufferPayment.unit, unit_hash);
