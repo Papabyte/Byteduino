@@ -214,7 +214,7 @@ void requestInputsForAmount(int amount, const char * address){
 	JsonObject & objParams = jsonBuffer.createObject();
 	JsonArray & arrAddresses = jsonBuffer.createArray();
 
-	objParams["last_ball_mci"] = 1000000000;
+	objParams["last_ball_mci"] = bufferPayment.last_ball_mci;
 	objParams["amount"] = amount + 1000 + strlen(bufferPayment.dataFeedJson);
 
 	arrAddresses.add(address);
@@ -276,7 +276,8 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	
 	int headers_commission = 0;
 	int payload_commission = 0;
-
+	const bool hasKeySizeUpgrade = byteduino_device.isTestNet || bufferPayment.last_ball_mci >= KEY_SIZE_UPGRADE_MCI;
+	
 	DynamicJsonBuffer jsonBuffer(1000);
 	JsonArray & mainArray = jsonBuffer.createArray();
 	JsonObject & objParams = jsonBuffer.createObject();
@@ -286,70 +287,76 @@ void composeAndSendUnit(JsonArray& arrInputs, int total_amount){
 	if (byteduino_device.isTestNet){
 		unit["version"] = TEST_NET_VERSION;
 		unit["alt"] = TEST_NET_ALT;
-		headers_commission += 5;
+		headers_commission += 5 + (hasKeySizeUpgrade ? 10 : 0);
+						Serial.println(headers_commission);
+
 	} else {
 		unit["version"] = MAIN_NET_VERSION;
 		unit["alt"] = MAIN_NET_ALT;
-		headers_commission += 4;
+		headers_commission += 4 + (hasKeySizeUpgrade ? 10 : 0);
 	}
 
 	unit["witness_list_unit"] = (const char *) bufferPayment.witness_list_unit;
 	unit["last_ball_unit"] = (const char *) bufferPayment.last_ball_unit;
 	unit["last_ball"] = (const char *) bufferPayment.last_ball;
-	headers_commission += 132;
+	headers_commission += 132 + (hasKeySizeUpgrade ? 47 : 0);
 
 	unit["timestamp"] = bufferPayment.timestamp;
-	headers_commission += 8;
+	headers_commission += 8 + (hasKeySizeUpgrade ? 9 : 0);
 
 	JsonArray & parent_units = jsonBuffer.createArray();
 	parent_units.add((const char * ) bufferPayment.parent_units[0]);
-	headers_commission+=88; // PARENT_UNITS_SIZE
+	headers_commission+=88 + (hasKeySizeUpgrade ? 12 : 0); // PARENT_UNITS_SIZE
 	if (strcmp(bufferPayment.parent_units[1],"") != 0){
 		parent_units.add((const char * ) bufferPayment.parent_units[1]);
 	}
 
-	headers_commission += 32 + 88;// for authors
+	headers_commission += 32 + 88 + (hasKeySizeUpgrade ? 21 : 0);// for authors
 	if (bufferPayment.requireDefinition)
-		headers_commission += 44 + 3;// for definition
+		headers_commission += 44 + 3 + (hasKeySizeUpgrade ? 16 : 0);// for definition
 
 	JsonObject &datafeedPayload = jsonBuffer.parseObject(bufferPayment.dataFeedJson);
 	char datafeedPayloadHash[45];
 
 	if (bufferPayment.hasDataFeed){
-		payload_commission += 9 + 6 + 44;//data_feed + inline + payload hash
+		payload_commission += 9 + 6 + 44 + (hasKeySizeUpgrade ? 38 : 0);//data_feed + inline + payload hash
 		for (JsonPair& p : datafeedPayload) {
-			payload_commission+= strlen(p.value);
+			payload_commission+= strlen(p.value) + (hasKeySizeUpgrade ? strlen(p.key) : 0);
 		}
 
 		getBase64HashForJsonObject (datafeedPayloadHash, datafeedPayload, true);
 	}
 
 	JsonObject &paymentPayload = jsonBuffer.createObject();
-	payload_commission += 7 + 6 + 44;//payment + inline + payload hash
+	payload_commission += 7 + 6 + 44 + (hasKeySizeUpgrade ? 46 : 0);//payment + inline + payload hash + messages and payload key
 
 	JsonArray &inputs = paymentPayload.createNestedArray("inputs");
+
+	if (hasKeySizeUpgrade)
+		payload_commission+= 6; // for key inputs
 
 	for (JsonObject& elem : arrInputs) {
 		JsonObject& input = elem["input"];
 		inputs.add(input);
 		if (input.containsKey("type"))//if it has a type, then it's header commission
-			payload_commission+= 18 + 8 + 8; //header_commission + from_main_chain_index + to_main_chain_index
+			payload_commission+= 18 + 8 + 8 + (hasKeySizeUpgrade ? 44 : 0); //headers_commission + from_main_chain_index + to_main_chain_index
 		else
-			payload_commission+= 44 + 8 + 8; //unit + message index + output index
+			payload_commission+= 44 + 8 + 8 + (hasKeySizeUpgrade ? 29 : 0); //unit + message index + output index
 	}
 
 	JsonArray &outputs = paymentPayload.createNestedArray("outputs");
 	JsonObject &firstOutput = jsonBuffer.createObject();
-
+		if (hasKeySizeUpgrade)
+			payload_commission+= 7; // for key outputs
 	if (bufferPayment.amount > 0){
 		firstOutput["address"] = (const char *) bufferPayment.recipientAddress;
 		firstOutput["amount"] = (const int) bufferPayment.amount;
-		payload_commission+= 32 + 8; // addresse + amount
+		payload_commission+= 32 + 8 + (hasKeySizeUpgrade ? 13 : 0); // address + amount
 	}
 
 	JsonObject &changeOutput = jsonBuffer.createObject();
 	changeOutput["address"] = (const char *) byteduino_device.fundingAddress;
-	payload_commission+= 32 + 8; // addresse + amount4
+	payload_commission+= 32 + 8 + (hasKeySizeUpgrade ? 13 : 0); // address + amount
 	int change_amount = total_amount - bufferPayment.amount - headers_commission - payload_commission;
 	changeOutput["amount"] = change_amount;
 
